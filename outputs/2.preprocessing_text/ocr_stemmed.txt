@@ -1,0 +1,343 @@
+* proceed 4th usp aavanc 
+ technolog confer , washington d.c. , 
+ pp 1003 - 1011 , novemb 1990 . 
+
+ handwritten charact recognit 
+ neural network architectur 
+
+ o. matan , r. k. kiang , c. e. stenard , b. boser , 
+ j.s. denker , d. henderson , r. e. howard , w. hubbard , 
+ l. d. jackel , y. le cun 
+ at&t bell laboratori , holmdel , n. j. 07733 
+
+ abstract 
+
+ develop neural - network architectur recogn 
+ handwritten digit . network 1 % error rate 7 % 
+ reject rate handwritten zipcod digit provid u.s. postal 
+ servic . paper , discuss implement architectur 
+ real - world charact recognit system . main issu trade 
+ cost benefit accuraci speed . method 
+ combin independ train network achiev higher perform rel low cost present . 
+
+ accur estim probabl correct recognit , 
+ runner - probabl , - increas import recognit system lab real world . - charact 
+ probabl inform necessari calcul - field 
+ multi - field probabl . discuss method normal output activ level , provid normal score , ( 
+ network ) good estim probabl . find 
+ normal score reject threshold give similar 
+ perform previou reject scheme . 
+
+ discuss import complex relationship 
+ reject threshold , averag number error , cost error . 
+
+ 1 introduct 
+
+ built feed - forward multi - layer neural network architectur 
+ recogn handwritten digit ( le cun et al . , 1990 ) . network 
+ shown good gener perform . accomplish combin “ learn exampl ” care engin ; find 
+
+ yc gpu us4ebs7acst uia chie ! 
+ 8663897 202992997225 100467 
+ ollzsosaaaastioilogis#fogioss4 
+ zlcoov1l11030472526298097 ° 799 
+ corp iaotlitaessfidiyapiesi 
+ goloifitoistii299530r99707 
+ syovoptotseptiziptraaissiifio 
+ sseotssipass ( f275 1435930907 
+ gsi7s7shpicssy¥ecossylosb he 
+ ssibzssiobsosolisaoiist¢o ! 
+
+ a. 
+
+ figur 1 : exampl normal digit test set . 
+
+ ten thousand exampl suffic consider priori 
+ knowledg problem incorpor architectur . input 
+ network size - normal pixel imag output consist 
+ 10 unit ( class ) . target output pattern belong 
+ class +1 ith unit — 1 output unit . 
+ network train - propag ( rumelhart , hinton 
+ william , 1986 ) zipcod digit suppli u.s. postal servic plu 
+ addit digit sourc . exampl digit shown 
+ figur 1 . 
+
+ implement version architectur , vari paramet size input field . normal input size 16 
+ 16 grey - level pixel , best result 1 % error rate 9 % reject rate ; 
+ input 20 20 grey - level pixel , achiev 1 % error rate 
+ 7 % reject rate . detail account work ( le cun 
+ et al . , 1990 ) . 
+
+ paper discuss way improv perform 
+ network real - world applic : section 2 present method 
+ combin output independ train network , decreas 
+ reject rate and/or error rate . section 3 discuss method 
+ normal activ level output unit ; improv 
+ recognit individu digit , provid reason estim 
+ probabl correct classif . section 4 discuss 
+ import coupl reject variabl cost function , order 
+ determin reject threshold measur overal perform . 
+
+ tabl 1 : reject percentag rate 0.5 % , 1 % 2 % error rate 
+ 2711 handwritten print charact . result shown individu 
+ network combin . 
+
+ 2 multi - network decis 
+
+ let consid combin network . extrem , 
+ wast time evalu multipl network produc 
+ output correspond input . fortun , find differ 
+ network differ mistak ; combin provid 
+ inform singl network . note multipl network 
+ easili evalu parallel case speed import . 
+
+ tabl 1 present recognit perform rate independ train network 16 16 input architectur describ ( le 
+ cun et al . , 1990 ) . network , b , c train test 
+ exactli data . train , weight ( connect 
+ strength ) network set valu expect priori 
+ approxim correct , vast major weight independ set random initi valu . network c , initi weight 
+ random . case , weight free chang train . 
+
+ databas consist 9298 segment numer extract handwritten zipcod supplement 3349 machin print digit 
+ font . train set compos 7291 handwritten digit 2645 
+ print digit . remain 2007 handwritten 704 print digit constitut test set . reject rate necessari certain error rate 
+ present individu network . perform 
+ network c consider wors . tabl 1 result 
+ combin network shown . combin 
+
+ tabl 2 : reject percentag rate 0.5 % , 1 % 2 % error rate 2007 
+ handwritten charact . result shown individu network 
+ combin . 
+
+ network averag activ level output layer 
+ treat result output combin network . 
+
+ attribut precis tabul number , 
+ total number error network small 
+ signific “ quantiz nois ” measur — 
+ differ error error tremend signific . 
+
+ combin network perform exce , case , perform individu network . interest case 
+ b+c c far inferior perform . result 
+ handwritten data present tabl 2 . 
+
+ discuss 
+
+ possibl reason contribut explan 
+ network train data differ mistak . , 
+ know train method , - propag , imperfect . 
+ subject get stuck local minima . ( exist method escap 
+ local minima , comput involv find absolut best 
+ point weight space usual prohibit . ) fundament , , 
+ uniqu “ best ” place weight space , larg 
+ region equal consist train data . train 
+ set extrem limit size , believ leav network 
+ underdetermin . 
+
+ case , train network retain vestig ( random ) 
+ initi condit . high dimension weight space , 
+ , effect , vast number way differ network 
+ differ mistak . give ground hope multi - net 
+ vote effect , guarante . 
+
+ highest accuraci , appli multipl network input . 
+ combin network requir twice comput power , 
+ applic , high accuraci import ad 
+ complex worth . possibl custom analog 
+ vlsi neural - net chip ( jackel et al . , 1990 ; graf henderson , 1990 ) , 
+ price / perform ratio drop point cost multiplenetwork recognit immateri . 
+
+ case , way achiev consider improv 
+ doubl comput , “ multi - level reject ” 
+ follow : pass second network case assign 
+ low confid network . comput increas 
+ fraction case need pass “ second opinion . ” case 
+ a+b appear tabl 1 , need pass 14 % percent 
+ digit second recognit maintain level perform 
+ 1 % 2 % error rate . order maintain perform 0.5 % 
+ error rate , pass 39 % second recogn . 
+
+ 3 classif probabl estim 
+
+ output network set activ level output layer . 
+ previou section , task simpli choos , accord 
+ valu , possibl outcom : reject , classif 
+ class . attempt assign probabl 
+ possibl outcom . section present method normal 
+ output activ level , form good estim 
+ probabl . 
+
+ abil estim probabl input belong class 1 
+ great theoret practic import . given abil abl 
+ model classifi perform . combin cost model 
+ tune system minim cost . possibl deal 
+ activ level output layer . case charact recognit , 
+ knowledg probabl singl charact recognit make possibl 
+ calcul probabl multipl charact recognit reject 
+
+ - field basi . 
+
+ john bridl recent propos normal scheme classifi 
+ n mutual - exclus outcom ( bridl , 1989 ) . scheme , 
+ name softmax , appli post - processor “ raw output ” 
+ neural network . softmax appeal output posit sum 
+ 1 , satisfi axiom probabl theori . softmax output 
+ increas function correspond raw output ( 
+ output held constant ) preserv order class . 
+ interest theoret qualiti softmax , connect 
+ entropi system ( bridl , 1989 ) . form softmax 
+ follow : 
+
+ " dg ef om 
+
+ oq , activ level output unit , s , softmax 
+ score class i. slightli modifi function ad 
+ addit term denomin : 
+
+ 260 . 
+ 5 , = e ® + de cfr 
+
+ term involv essenti repres activ level 
+ artifici n+1st categori , “ ” categori . caus 
+ reduct score highest activ unit low absolut valu . 
+
+ softmax consid competit - activ unit 
+ ( simpl reject scheme previou section 
+ consid competit class ) . test conduct softmax appropri valu 3 gave essenti 
+ ident reject perform simpler scheme . indic 
+ rel case - way tie second place . 
+
+ discret ( “ / - ” ) singl - digit reject decis , immateri ; main import enabl tune softmax reliabl 
+ probabl estim probabl candid class return 
+ neural network classifi . figur 2 softmax score “ winner ” 
+ class plot versu percentag case class fact 
+ correct answer . distribut softmax score plot . 
+ raw recognit rate 90 % popul 
+ concentr small histogram . , 
+
+ % correct % total pattern 
+ 1 1 
+
+ 94 9 
+
+ 84 8 
+
+ 74 7 
+
+ 64 6 
+
+ 54 5 
+
+ 4 ) 4 
+
+ 34 3 
+
+ 24 2 
+
+ 1 
+
+ ° 0 4 567 8 9 ° 0 t 23 4 5 67 8 9 
+ ( ) softmax score ( b ) softmax score 
+
+ figur 2 : ( ) percentag correct classif vs. softmax score 
+ suppli classifi highest score candid ( 3 = 3.75,a = 5 ) . 
+ popul distribut score test set plot ( b ) . 
+
+ softmax score give good indic probabl correct 
+ classif . figur 3 function plot second 
+ highest score class ( “ runner ” ) . case popul 
+ concentr low score valu . , , softmax 
+ good estim probabl class correct answer . 
+
+ 4 cost , reject error 
+
+ previou section discuss method process output 
+ layer neural network order enhanc product classifi system . post - process stage great practic import 
+ make accept / reject decis . issu address 
+ extent import cost accept / reject / error . 
+ paramet usual minim lab reject rate 
+ constant error rate vice versa . good measur assess 
+ technolog measur technic advanc . 
+ real - world system , true paramet want minim cost , 
+ , cost model incorpor reject paramet . typic exampl digit zip code . error 
+ digit costli error digit . inform encod reject valu digit question . 
+
+ % correct % total pattern 
+ 1 1 
+
+ j © | 94 
+
+ 8 8 
+
+ 7 7 ] 
+
+ 64 64 
+
+ 5 ] 54 
+
+ 44 4 
+
+ 24 24 
+
+ 1d 1 , 
+
+ 0 0 
+ 0 4 5 67 8 9 0 12 3 4 5 6 7 8 9 
+ ( ) softmax score ( b ) softmax score 
+
+ figur 3 : ( ) percentag correct classif vs. softmax 
+ score suppli classifi second highest score candid 
+ ( 6 = 3.75,a = 5 ) . popul distribut score second candid test set plot ( b ) . 
+
+ conclus recognit engin 
+ , accept / reject decis tune ta local 
+ problem . knowledg major mail stream local 
+ incorpor reject scheme enhanc cost / perform 
+ typic zipcod . 
+
+ summari 
+
+ present techniqu enhanc neural network classif appli zipcod digit recognit problem . 
+ result present far systemat studi , promis 
+ encourag work . 
+
+ work ( denker le cun , 1990 ) brought view 
+ propag neural network stage classif 
+ process . output network fed post - process stage 
+ use knowledg neural network problem 
+ tri solv . stage process gener superior perform 
+ expect stand - neural - network . 
+
+ acknowledg 
+
+ thank postal servic contractor provid 
+ zipcod databas . thank henri baird provid print 
+ font databas . grate rodolfo milito comment 
+ manuscript . 
+
+ refer 
+
+ bridl , j. s. ( 1989 ) . probabilist interpret feedforward classif network output relationship statist pattern 
+ recognit . fougelman - souli , f. hérault , j. , editor , neurocomput : algorithm , architectur applic . springer - verlag . 
+
+ denker , j. s. le cun , y. ( 1990 ) . unpublish . 
+
+ graf , h. p. henderson , d. ( 1990 ) . reconfigur cmo neural 
+ network . isscc dig . tech . paper . ieee int . solid - state circuit 
+
+ confer . 
+
+ jackel , l. d. , graf , h. p. , boser , b. , denker , j. s. , le cun , y. , howard , 
+ r. e. , matan , o. , baird , h. s. ( 1990 ) . hardwar consider 
+ neural - net charact recognit system . simon , j. , editor , 
+ pizel featur , ( bona , franc 1990 ) . 
+
+ le cun , y. , matan , o. , boser , b. , denker , j. s. , henderson , d. , howard , 
+ r. e. , hubbard , w. , jackel , l. d. , baird , h. s. ( 1990 ) . handwritten zip code recognit multilay network . proceed 
+ 10th intern confer pattern recognit , ( atlant 
+ citi , nj , 1990 ) . ieee comput societi press . 
+
+ rumelhart , d. e. , hinton , g. e. , william , r. j. ( 1986 ) . learn 
+ intern represent error propag . parallel distribut 
+ process : explor microstructur cognit , volum , 
+ page 318 - 362 . bradford book , cambridg , ma .

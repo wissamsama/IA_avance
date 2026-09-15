@@ -1,0 +1,70 @@
+rag evalu metric : journey metric 
+ explor rag evalu metric like bleu score , roug score , ppl , bartscor , . discov elast evalu rag uniev . 
+ seamlessli connect lead ai machin learn platform . start free cloud trial explor elast gen ai capabl tri machin . 
+ 2020 , meta publish paper titl “ retriev - augment gener knowledg - intens nlp task ” . paper introduc method expand knowledg languag model ( llm ) initi train data leverag extern databas . , approach garner signific attent research remain promin highli discuss topic substanti benefit . advantag encompass eas updat knowledg databas , enabl smaller model match perform larger model specif task , allow gener gener domain outsid train data , reduc occurr hallucin , . 
+ experi discoveri invari revolv measur model perform given task . unfortun , assess qualiti gener text pose signific challeng , given inher open permiss . “ search ” scenario , exist “ ideal ” document rank , allow straightforward comparison gaug close align ideal rank . , come evalu qualiti gener text term answer question summar content , task consider complex . 
+ blog , primari focu rag ( retriev - augment gener ) question answer task specif close - domain qa . delv metric commonli employ field . thoroughli explor metric explain decis elast effect monitor model perform . 
+ n - gram metric 
+ famili metric , idea check similar gener text “ ground truth ” . variat base idea , talk . 
+ bleu score 
+ - bleu score : bilingu evalu understudi , known bleu , metric employ assess qualiti machin - gener passag compar multipl refer passag . quantifi resembl analyz presenc share n - gram ( sequenc n consecut word ) . bleu score assign rang 0 1 , higher score signifi closer align gener text refer text ( ) . 
+ fig.1 - 1 - gram precis ( call bleu-1 ) calcul bleu built score differ n - gram addit factor breviti 
+ roug score 
+ - roug score : recal - orient understudi gist evalu usual assess effect machin - gener summari . evalu similar gener passag refer passag count share word phrase . roug differ bleu score , calcul recal , bleu calcul precis . mean roug primarili focus determin inform refer passag contain gener passag . characterist make roug popular choic task relat summar . 
+ meteor score 
+ - meteor score : metric evalu translat explicit order metric wide field machin gener . meteor differ previous mention metric incorpor harmon mean precis recal . addit , take synonym , stem word order ( fragment penalti ) account assess word match . attribut contribut meteor achiev stronger correl human judgment compar bleu . 
+ metric serv valuabl tool quick straightforward evalu llm , certain limit render ideal . begin , fall short come assess fluenci , coher , overal mean passag . rel insensit word order . furthermor , despit meteor attempt address issu synonym stem , evalu tool lack semant knowledg , make blind semant variat . problem particularli acut assess long text effect , treat text mere bag passag overli simplist . addit , relianc ' templat answer ' make expens use larg - scale evalu introduc bia exact phraseolog templat . lastli , specif task , studi reveal correl bleu roug score human judgment actual low . reason , research tri find improv metric . 
+ intrins metric 
+ perplex ( ppl ) 
+ perplex ( abbrevi ppl ) stand common metric assess languag model ( llm ) . calcul perplex necessit have access probabl distribut word gener model . measur confid model abl predict sequenc word . higher perplex , confid model predict observ sequenc . formal , defin follow : 
+ log predict probabl token condit token ( ! = ) sentenc accord model . illustr , exampl perplex comput model vocabulari word . 
+ fig.2 - perplex score exampl 
+ signific benefit perplex speed comput sole reli output probabl involv extern model . addit , tend strong correl qualiti model ( correl vari depend test dataset ) . 
+ nonetheless , perplex come certain limit pose challeng . firstli , reli inform densiti model , make difficult compar model differ vocabulari size context length . imposs compar score dataset , evalu data intrins higher perplex . , overli sensit vocabulari discrep , potenti penal model express answer differ , version valid . lastli , perplex - suit evalu model abil handl languag ambigu , creativ , hallucin . ambigu especi , word poorli determin rest sequenc push perplex , indic poor gener understand . potenti penal model understand ambigu better capabl . shortcom , nlp commun explor advanc extrins metric address issu . 
+ model - base metric 
+ intrins n - gram metric signific drawback leverag semant understand evalu accuraci gener content . consequ , align close human judgement want . model - base metric emerg promis solut tackl issu . 
+ bertscor 
+ - bertscor : understand sentenc mean semant standpoint , bertscor use famou transform - base model bert . look sentenc want evalu refer sentenc , compar similar leverag contextu embed token sentenc . final score comput weight combin cosin similar closest token pair . 
+ bleurt 
+ - bleurt : basic concept close resembl bertscor , reli transform - base model assess similar refer text candid text . , bleurt train incorpor crucial enhanc . , use pre - train step dataset random chang base wikipedia content simul gener output variabl . addit , use fine - tune step incorpor human rate refin perform . 
+ bartscor 
+ - bartscor : idea translat problem evalu gener text text gener problem . specif train sequenc - - sequenc model base bart , capabl get score weight log probabl gener text y given input text x. bartscor support evalu gener text differ perspect ( faith , precis , recal , … ) make power . 
+ fig.3 - kendal tau correl differ metric wmt19 dataset bartscor paper 
+ bertscor bleurt seen essenti n - gram recal contextu represent . bartscor , end , closer perplex measur , target gener text , critic model model . model - base metric offer strong evalu capabl , slower bleu ppl involv extern model . rel low correl bleu human judgement gener context mean trade - justifi . simpl similar base metric popular select llm ( seen hug face leaderboard ) . approach serv reason proxi , given capabl current state art llm suffici . 
+ uniev : elast choic evalu rag 
+ uniev unifi evalu dimens boolean question answer framework , allow singl model assess gener text angl . exampl , evalu dimens relev , ask model directli " relev answer question ? ” . given set task determin evalu dimens , model train abl evalu gener text respect dimens . employ t5 foundat model , uniev use - step train process . initi step , call “ intermedi multitask learn ” , util queri context address multipl task unifi boolean qa task pre - exist relev dataset . subsequ , second step entail sequenti train , model learn , dimens dimens , evalu distinct aspect gener text . pre - train uniev model gear summar , think rag question answer view aggress summar task avoid parametr memori accur respons . train follow dimens : 
+ - coher , gaug format cohes bodi sentenc . 
+ - consist , assess factual align answer context . 
+ - fluenci , evalu qualiti individu sentenc . 
+ - relev , measur factual align answer ground truth . 
+ fig.4 - pearson spearman correl topic - chat benchmark averag uniev dimens 
+ uniev power , current hold titl “ state - - - art ” evalu model , write . gpt - base evalu , like g - eval , potenti stronger correl human judgment uniev ( context gpt-4 base evalu ) . , essenti consid signific cost differ . uniev 800 - million - paramet model , gpt-4 estim boast massiv 1.76 trillion paramet . firmli believ slight advantag seen g - eval-4 justifi substanti increas cost . 
+ real - world usag uniev 
+ start explor uniev , intend incorpor numer excit project involv text gener futur . , arm evalu model , decid test capabl address specif question . 
+ easili compar llm qualiti uniev ? 
+ like consider come mind evalu metric . effect tool predict qualiti llm ? conduct benchmark test mistral-7b - instruct falcon-7b - instruct assess distinguish model term fluenci , consist , coher , relev . benchmark , employ 200 queri 18 dataset , ensur divers rang context ( includ bioasq , boolq , coqa , cosmosqa , hagrid , hotpotqa , msmarco , multispanqa , narrativeqa , newsqa , nq , popqa , quac , searchqa , sleepqa , squad , toolqa , triviaqa , truthfulqa ) . prompt given mistral / falcon includ queri context contain inform need answer queri . 
+ fig.5 - uniev evalu mistral falcon distribut score 3600 queri . higher score better . 
+ specif instanc , evid mistral outperform falcon evalu dimens , make decis straightforward . , challeng case , particularli decid relev consist , crucial question answer rag . 
+ “ consist score ” correl number hallucin gener model ? 
+ experi straightforward . gather 100 queri squad 2.0 dataset . , assess model ( specif mistral-7b - instruct - v0.1 instanc , model ) uniev . follow , manual examin annot gener text exhibit hallucin . afterward , creat calibr curv check “ consist score ” serv reliabl predictor probabl hallucin . simpler term , investig “ consist score ” number hallucin correl . 
+ fig.6 - calibr curv consist hallucin detect 
+ observ , consist turn reliabl indic probabl hallucin , flawless . encount situat hallucin subtl challeng identifi . addit , model test occasion provid correct answer origin prompt context parametr memori . term consist metric , resembl hallucin , answer accur . , averag , detect hallucin actual true number . worth note , certain experi deliber includ mislead prompt , manag mislead gener process evalu . prove uniev silver bullet . 
+ decod strategi impact evalu dimens ? 
+ experi , want compar differ way decod inform falcon-7b - instruct . tri method 18 dataset , 5 queri dataset ( 90 queri total ): 
+ - greedi decod , chose like token . 
+ - beam decod , involv maintain multipl possibl path select highest overal probabl ( 5 beam ) . 
+ - topk decod , select candid , redistribut probabl , sampl token ( k valu 4 ) . 
+ - nucleu decod , similar topk variabl number candid base probabl mass threshold ( threshold=0.95 , max_topk=50 ) . 
+ - contrast decod , appli penalti candid encourag divers select process ( penalty_alpha=0.6 , topk=4 ) . 
+ fig.7 - decod strategi benchmark uniev 
+ accord earlier studi , effect method contrast decod . import note greedi decod hold reason context , recogn somewhat constrain strategi . attribut focu short answer ( maximum 64 new token ) possibl uniev accur assess “ divers ” aspect . 
+ conclus 
+ blog , aim insight challeng involv evalu llm , particularli context question answer rag . field earli stage , numer paper publish subject . uniev cure - solut , find compel approach offer precis assess rag pipelin perform . mark initi step ongo research endeavor elast . , object enhanc search experi , believ solut like uniev , similar approach , contribut develop valuabl tool user . 
+ releas time featur function describ post remain elast sole discret . featur function current avail deliv time . 
+ elast , elasticsearch associ mark trademark , logo regist trademark elasticsearch n.v. unit state countri . compani product name trademark , logo regist trademark respect owner . 
+ frequent ask question 
+ metric commonli evalu rag ? 
+ metric evalu rag , : n - gram metric ( includ bleu score , roug score & meteor score ) , intrins metric ( like ppl ) , model - base metric ( bertscor , bleurt bartscor ) , elast choic : uniev . 
+ uniev evalu rag ? 
+ uniev evalu rag unifi evalu dimens boolean question answer framework , allow singl model assess gener text angl . 
+ help content ?

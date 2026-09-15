@@ -1,0 +1,334 @@
+[
+  {
+    "text": "0",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "1",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "1.76 trillion",
+    "label": "MONEY"
+  },
+  {
+    "text": "18",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "2.0",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "200",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "2020",
+    "label": "DATE"
+  },
+  {
+    "text": "3600",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "4",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "5",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "64",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "800-million",
+    "label": "QUANTITY"
+  },
+  {
+    "text": "90",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "AI",
+    "label": "GPE"
+  },
+  {
+    "text": "AI",
+    "label": "ORG"
+  },
+  {
+    "text": "BART",
+    "label": "ORG"
+  },
+  {
+    "text": "BARTScore",
+    "label": "GPE"
+  },
+  {
+    "text": "BARTScore",
+    "label": "ORG"
+  },
+  {
+    "text": "BARTScore\n- BARTScore",
+    "label": "PERSON"
+  },
+  {
+    "text": "BERT",
+    "label": "ORG"
+  },
+  {
+    "text": "BERTScore",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "BERTScore",
+    "label": "GPE"
+  },
+  {
+    "text": "BERTScore",
+    "label": "NORP"
+  },
+  {
+    "text": "BLEU",
+    "label": "ORG"
+  },
+  {
+    "text": "BLEU-1",
+    "label": "ORG"
+  },
+  {
+    "text": "BLEURT",
+    "label": "ORG"
+  },
+  {
+    "text": "BioASQ",
+    "label": "NORP"
+  },
+  {
+    "text": "BoolQ",
+    "label": "GPE"
+  },
+  {
+    "text": "Boolean Question Answering",
+    "label": "ORG"
+  },
+  {
+    "text": "CoQA",
+    "label": "ORG"
+  },
+  {
+    "text": "Elastic",
+    "label": "ORG"
+  },
+  {
+    "text": "Elasticsearch",
+    "label": "ORG"
+  },
+  {
+    "text": "Elasticsearch N.V.",
+    "label": "ORG"
+  },
+  {
+    "text": "Elastic\u2019s",
+    "label": "PRODUCT"
+  },
+  {
+    "text": "Falcon",
+    "label": "ORG"
+  },
+  {
+    "text": "Falcon-7b-Instruct",
+    "label": "ORG"
+  },
+  {
+    "text": "Fig.1",
+    "label": "ORG"
+  },
+  {
+    "text": "Fig.2 - Perplexity",
+    "label": "ORG"
+  },
+  {
+    "text": "Fig.5 - UniEval",
+    "label": "ORG"
+  },
+  {
+    "text": "Fig.7 - Decoding",
+    "label": "ORG"
+  },
+  {
+    "text": "First",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "Firstly",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "G-Eval",
+    "label": "ORG"
+  },
+  {
+    "text": "G-Eval-4",
+    "label": "ORG"
+  },
+  {
+    "text": "GPT",
+    "label": "ORG"
+  },
+  {
+    "text": "GPT-4",
+    "label": "PERSON"
+  },
+  {
+    "text": "Hugging Face",
+    "label": "ORG"
+  },
+  {
+    "text": "Language Models",
+    "label": "ORG"
+  },
+  {
+    "text": "METEOR",
+    "label": "ORG"
+  },
+  {
+    "text": "Meta",
+    "label": "ORG"
+  },
+  {
+    "text": "Mistral",
+    "label": "ORG"
+  },
+  {
+    "text": "Mistral-7b-Instruct and",
+    "label": "ORG"
+  },
+  {
+    "text": "Mistral/Falcon",
+    "label": "ORG"
+  },
+  {
+    "text": "N-gram",
+    "label": "QUANTITY"
+  },
+  {
+    "text": "NLP",
+    "label": "ORG"
+  },
+  {
+    "text": "NQ",
+    "label": "GPE"
+  },
+  {
+    "text": "NarrativeQA",
+    "label": "ORG"
+  },
+  {
+    "text": "NewsQA",
+    "label": "GPE"
+  },
+  {
+    "text": "PPL",
+    "label": "ORG"
+  },
+  {
+    "text": "QA",
+    "label": "ORG"
+  },
+  {
+    "text": "Question Answering",
+    "label": "ORG"
+  },
+  {
+    "text": "RAG",
+    "label": "PERSON"
+  },
+  {
+    "text": "RAG\nUniEval",
+    "label": "PERSON"
+  },
+  {
+    "text": "RAG (Retrieval-Augmented Generation) Question Answering",
+    "label": "WORK_OF_ART"
+  },
+  {
+    "text": "RAG Question Answering",
+    "label": "ORG"
+  },
+  {
+    "text": "ROUGE",
+    "label": "ORG"
+  },
+  {
+    "text": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "label": "WORK_OF_ART"
+  },
+  {
+    "text": "The Bilingual Evaluation Understudy",
+    "label": "ORG"
+  },
+  {
+    "text": "The Recall-Oriented Understudy for Gisting Evaluation",
+    "label": "ORG"
+  },
+  {
+    "text": "Transformer",
+    "label": "ORG"
+  },
+  {
+    "text": "TriviaQA",
+    "label": "GPE"
+  },
+  {
+    "text": "UniEval",
+    "label": "GPE"
+  },
+  {
+    "text": "UniEval",
+    "label": "ORG"
+  },
+  {
+    "text": "Wikipedia",
+    "label": "ORG"
+  },
+  {
+    "text": "about 100",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "first",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "just three",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "one",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "second",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "the United States",
+    "label": "GPE"
+  },
+  {
+    "text": "three",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "two",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "x. BARTScore",
+    "label": "ORG"
+  }
+]

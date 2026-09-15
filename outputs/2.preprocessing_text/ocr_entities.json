@@ -1,0 +1,626 @@
+[
+  {
+    "text": "0",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "0 0",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "0 4",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "0.5%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "1",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "1 1",
+    "label": "DATE"
+  },
+  {
+    "text": "1%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "1% and",
+    "label": "PERCENT"
+  },
+  {
+    "text": "10",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "1003-1011",
+    "label": "DATE"
+  },
+  {
+    "text": "10th",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "16",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "1986",
+    "label": "DATE"
+  },
+  {
+    "text": "1989",
+    "label": "DATE"
+  },
+  {
+    "text": "1990",
+    "label": "DATE"
+  },
+  {
+    "text": "2",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "2%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "20",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "2007",
+    "label": "DATE"
+  },
+  {
+    "text": "23",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "24",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "24",
+    "label": "DATE"
+  },
+  {
+    "text": "24 2",
+    "label": "DATE"
+  },
+  {
+    "text": "260",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "2645",
+    "label": "DATE"
+  },
+  {
+    "text": "2711",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "3",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "3.75,a",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "318",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "3349",
+    "label": "DATE"
+  },
+  {
+    "text": "34 3",
+    "label": "DATE"
+  },
+  {
+    "text": "39%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "4",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "44 4",
+    "label": "DATE"
+  },
+  {
+    "text": "4th",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "5",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "54",
+    "label": "DATE"
+  },
+  {
+    "text": "54 5",
+    "label": "DATE"
+  },
+  {
+    "text": "6",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "64 6",
+    "label": "DATE"
+  },
+  {
+    "text": "64 64",
+    "label": "DATE"
+  },
+  {
+    "text": "7 7",
+    "label": "DATE"
+  },
+  {
+    "text": "7%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "704",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "7291",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "74 7",
+    "label": "DATE"
+  },
+  {
+    "text": "8 8",
+    "label": "DATE"
+  },
+  {
+    "text": "8 9",
+    "label": "DATE"
+  },
+  {
+    "text": "84 8",
+    "label": "DATE"
+  },
+  {
+    "text": "8663897 202992997225 100467",
+    "label": "DATE"
+  },
+  {
+    "text": "9",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "9%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "90%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "9298",
+    "label": "DATE"
+  },
+  {
+    "text": "94",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "AT&T Bell Laboratories",
+    "label": "ORG"
+  },
+  {
+    "text": "Accurate",
+    "label": "ORG"
+  },
+  {
+    "text": "Atlantic\nCity",
+    "label": "GPE"
+  },
+  {
+    "text": "B+C",
+    "label": "GPE"
+  },
+  {
+    "text": "B. Boser",
+    "label": "PERSON"
+  },
+  {
+    "text": "Baird",
+    "label": "PERSON"
+  },
+  {
+    "text": "Bonas",
+    "label": "GPE"
+  },
+  {
+    "text": "Boser",
+    "label": "PERSON"
+  },
+  {
+    "text": "Bradford Books",
+    "label": "ORG"
+  },
+  {
+    "text": "Bridle",
+    "label": "PERSON"
+  },
+  {
+    "text": "C. E. Stenard",
+    "label": "PERSON"
+  },
+  {
+    "text": "Cambridge",
+    "label": "GPE"
+  },
+  {
+    "text": "Character Recognition Systems",
+    "label": "ORG"
+  },
+  {
+    "text": "Circuits\n\nConference",
+    "label": "WORK_OF_ART"
+  },
+  {
+    "text": "Classification Probability Estimation",
+    "label": "ORG"
+  },
+  {
+    "text": "D.",
+    "label": "NORP"
+  },
+  {
+    "text": "D. E.",
+    "label": "PERSON"
+  },
+  {
+    "text": "D. Henderson",
+    "label": "PERSON"
+  },
+  {
+    "text": "Denker",
+    "label": "ORG"
+  },
+  {
+    "text": "Denker",
+    "label": "PERSON"
+  },
+  {
+    "text": "F275 1435930907",
+    "label": "DATE"
+  },
+  {
+    "text": "Fougelman-Soulie",
+    "label": "ORG"
+  },
+  {
+    "text": "France",
+    "label": "GPE"
+  },
+  {
+    "text": "G. E.",
+    "label": "PERSON"
+  },
+  {
+    "text": "GPU",
+    "label": "ORG"
+  },
+  {
+    "text": "Graf",
+    "label": "GPE"
+  },
+  {
+    "text": "H. P.",
+    "label": "PERSON"
+  },
+  {
+    "text": "H. S.",
+    "label": "PERSON"
+  },
+  {
+    "text": "Handwritten Zip Code Recognition",
+    "label": "PERSON"
+  },
+  {
+    "text": "Henderson",
+    "label": "GPE"
+  },
+  {
+    "text": "Henry Baird",
+    "label": "PERSON"
+  },
+  {
+    "text": "Hinton",
+    "label": "GPE"
+  },
+  {
+    "text": "Hinton",
+    "label": "PERSON"
+  },
+  {
+    "text": "Holmdel",
+    "label": "ORG"
+  },
+  {
+    "text": "Howard",
+    "label": "PERSON"
+  },
+  {
+    "text": "Hubbard",
+    "label": "GPE"
+  },
+  {
+    "text": "H\u00e9rault",
+    "label": "GPE"
+  },
+  {
+    "text": "IEEE Computer Society Press",
+    "label": "ORG"
+  },
+  {
+    "text": "International Conference on Pattern Recognition",
+    "label": "EVENT"
+  },
+  {
+    "text": "J.",
+    "label": "PERSON"
+  },
+  {
+    "text": "J. S.",
+    "label": "PERSON"
+  },
+  {
+    "text": "J.S. Denker",
+    "label": "ORG"
+  },
+  {
+    "text": "Jackel",
+    "label": "PERSON"
+  },
+  {
+    "text": "John Bridle",
+    "label": "PERSON"
+  },
+  {
+    "text": "L. D.",
+    "label": "PERSON"
+  },
+  {
+    "text": "L. D. Jackel",
+    "label": "PERSON"
+  },
+  {
+    "text": "Le Cun",
+    "label": "FAC"
+  },
+  {
+    "text": "Le Cun",
+    "label": "GPE"
+  },
+  {
+    "text": "Le Cun",
+    "label": "PERSON"
+  },
+  {
+    "text": "Le Cun et al.",
+    "label": "PERSON"
+  },
+  {
+    "text": "MA",
+    "label": "GPE"
+  },
+  {
+    "text": "Multi-Network Decisions",
+    "label": "ORG"
+  },
+  {
+    "text": "Multilayer Networks",
+    "label": "ORG"
+  },
+  {
+    "text": "N",
+    "label": "ORG"
+  },
+  {
+    "text": "N. J. 07733",
+    "label": "PERSON"
+  },
+  {
+    "text": "NJ",
+    "label": "ORG"
+  },
+  {
+    "text": "November 1990",
+    "label": "DATE"
+  },
+  {
+    "text": "One",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "Parallel",
+    "label": "PERSON"
+  },
+  {
+    "text": "Pizels",
+    "label": "NORP"
+  },
+  {
+    "text": "Probabilistic Interpretation of Feedforward Classification Network Outputs",
+    "label": "ORG"
+  },
+  {
+    "text": "R. E.",
+    "label": "PERSON"
+  },
+  {
+    "text": "R. E. Howard",
+    "label": "PERSON"
+  },
+  {
+    "text": "R. J.",
+    "label": "PERSON"
+  },
+  {
+    "text": "R. K. Kiang",
+    "label": "PERSON"
+  },
+  {
+    "text": "Rodolfo Milito",
+    "label": "PERSON"
+  },
+  {
+    "text": "Rumelhart",
+    "label": "ORG"
+  },
+  {
+    "text": "Rumelhart",
+    "label": "PERSON"
+  },
+  {
+    "text": "Simon",
+    "label": "PERSON"
+  },
+  {
+    "text": "Softmax",
+    "label": "PERSON"
+  },
+  {
+    "text": "Solid-State",
+    "label": "PERSON"
+  },
+  {
+    "text": "Springer-Verlag",
+    "label": "PERSON"
+  },
+  {
+    "text": "USPS",
+    "label": "ORG"
+  },
+  {
+    "text": "VLSI neural",
+    "label": "ORG"
+  },
+  {
+    "text": "W. Hubbard",
+    "label": "PERSON"
+  },
+  {
+    "text": "Washington D.C.",
+    "label": "GPE"
+  },
+  {
+    "text": "Williams",
+    "label": "PERSON"
+  },
+  {
+    "text": "Y.",
+    "label": "GPE"
+  },
+  {
+    "text": "Y.",
+    "label": "PERSON"
+  },
+  {
+    "text": "Y. Le Cun",
+    "label": "PERSON"
+  },
+  {
+    "text": "ZLCOOV1L11030472526298097\u00b0799",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "about 7%",
+    "label": "PERCENT"
+  },
+  {
+    "text": "al.",
+    "label": "PERSON"
+  },
+  {
+    "text": "eleven",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "fed",
+    "label": "ORG"
+  },
+  {
+    "text": "first",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "handwritten zipcode",
+    "label": "PERSON"
+  },
+  {
+    "text": "handwritten zipcodes",
+    "label": "GPE"
+  },
+  {
+    "text": "one",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "only 14% percent",
+    "label": "PERCENT"
+  },
+  {
+    "text": "second",
+    "label": "ORDINAL"
+  },
+  {
+    "text": "section 2",
+    "label": "LAW"
+  },
+  {
+    "text": "ten",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "tens of thousands",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "the U.S. Postal\nService",
+    "label": "ORG"
+  },
+  {
+    "text": "the U.S. Postal Service",
+    "label": "ORG"
+  },
+  {
+    "text": "the US Postal Service",
+    "label": "ORG"
+  },
+  {
+    "text": "three",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "two",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "zipcode",
+    "label": "CARDINAL"
+  },
+  {
+    "text": "\u00ae + De",
+    "label": "PERSON"
+  }
+]

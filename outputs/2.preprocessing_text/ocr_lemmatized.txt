@@ -1,0 +1,343 @@
+* proceedings 4th usps aavance 
+ technology conference , washington d.c. , 
+ pp 1003 - 1011 , november 1990 . 
+
+ handwritten character recognition 
+ neural network architectures 
+
+ o. matan , r. k. kiang , c. e. stenard , b. boser , 
+ j.s. denker , d. henderson , r. e. howard , w. hubbard , 
+ l. d. jackel , y. le cun 
+ at&t bell laboratories , holmdel , n. j. 07733 
+
+ abstract 
+
+ develop neural - network architecture recognize 
+ handwritten digit . network 1 % error rate 7 % 
+ reject rate handwritten zipcode digit provide u.s. postal 
+ service . paper , discuss implement architecture 
+ real - world character recognition system . main issue trade 
+ cost benefit accuracy speed . method 
+ combine independently train network achieve high performance relatively low cost present . 
+
+ accurate estimate probability correct recognition , 
+ runner - probability , - increase importance recognition system lab real world . - character 
+ probability information necessary calculate - field 
+ multi - field probability . discuss method normalize output activation level , provide normalized score , ( 
+ network ) good estimate probability . find 
+ normalize score rejection threshold give similar 
+ performance previous rejection scheme . 
+
+ discuss important complex relationship 
+ rejection threshold , average number error , cost error . 
+
+ 1 introduction 
+
+ build feed - forward multi - layer neural network architecture 
+ recognize handwritten digit ( le cun et al . , 1990 ) . network 
+ show good generalization performance . accomplish combine " learn example " careful engineering ; find 
+
+ yc gpu us4ebs7acst uia chie ! 
+ 8663897 202992997225 100467 
+ ollzsosaaaastioilogis#fogioss4 
+ zlcoov1l11030472526298097 ° 799 
+ corp iaotlitaessfidiyapiesy 
+ goloifitoistii299530r99707 
+ syovoptotseptiziptraaissiifio 
+ sseotssipass ( f275 1435930907 
+ gsi7s7shpicssy¥ecossylosbs hes 
+ ssibzssiobsosolisaoiist¢o ! 
+
+ a. 
+
+ figure 1 : example normalize digit testing set . 
+
+ ten thousand example suffice considerable priori 
+ knowledge problem incorporate architecture . input 
+ network size - normalize pixel image output consist 
+ 10 unit ( class ) . target output pattern belong 
+ class +1 ith unit — 1 output unit . 
+ network train - propagation ( rumelhart , hinton 
+ williams , 1986 ) zipcode digit supply u.s. postal service plus 
+ additional digit source . example digit show 
+ figure 1 . 
+
+ implement version architecture , vary parameter size input field . normalize input size 16 
+ 16 grey - level pixel , good result 1 % error rate 9 % reject rate ; 
+ input 20 20 grey - level pixel , achieve 1 % error rate 
+ 7 % reject rate . detailed account work ( le cun 
+ et al . , 1990 ) . 
+
+ paper discuss way improve performance 
+ network real - world application : section 2 present method 
+ combine output independently train network , decrease 
+ reject rate and/or error rate . section 3 discuss method 
+ normalize activity level output unit ; improve 
+ recognition individual digit , provide reasonable estimate 
+ probability correct classification . section 4 discuss 
+ importance couple rejection variable cost function , order 
+ determine rejection threshold measure overall performance . 
+
+ table 1 : rejection percentage rate 0.5 % , 1 % 2 % error rate 
+ 2711 handwritten print character . result show individual 
+ network combination . 
+
+ 2 multi - network decisions 
+
+ let consider combine network . extreme , 
+ waste time evaluate multiple network produce 
+ output correspond input . fortunately , find different 
+ network different mistake ; combination provide 
+ information single network . note multiple network 
+ easily evaluate parallel case speed important . 
+
+ table 1 present recognition performance rate independently train network 16 16 input architecture describe ( le 
+ cun et al . , 1990 ) . network , b , c train test 
+ exactly datum . training , weight ( connection 
+ strength ) network set value expect priori 
+ approximately correct , vast majority weight independently set random initial value . network c , initial weight 
+ random . case , weight free change training . 
+
+ database consist 9298 segment numeral extract handwritten zipcode supplement 3349 machine print digit 
+ font . training set compose 7291 handwritten digit 2645 
+ print digit . remain 2007 handwritten 704 print digit constitute test set . reject rate necessary certain error rate 
+ present individual network . performance 
+ network c considerably bad . table 1 result 
+ combination network show . combine 
+
+ table 2 : rejection percentage rate 0.5 % , 1 % 2 % error rate 2007 
+ handwritten character . result show individual network 
+ combination . 
+
+ network average activation level output layer 
+ treat result output combined network . 
+
+ attribute precision tabulate number , 
+ total number error network small 
+ significant " quantization noise " measurement — 
+ difference error error tremendously significant . 
+
+ combined network performance exceed , case , performance individual network . interesting case 
+ b+c c far inferior performer . result 
+ handwritten datum present table 2 . 
+
+ discussion 
+
+ possible reason contribute explanation 
+ network train datum different mistake . , 
+ know training method , - propagation , imperfect . 
+ subject get stick local minima . ( exist method escape 
+ local minima , computation involve find absolute good 
+ point weight space usually prohibitive . ) fundamentally , , 
+ unique " good " place weight space , large 
+ region equally consistent training datum . training 
+ set extremely limited size , believe leave network 
+ underdetermined . 
+
+ case , train network retain vestige ( random ) 
+ initial condition . high dimensionality weight space , 
+ , effect , vast number way different network 
+ different mistake . give ground hop multi - net 
+ voting effective , guarantee . 
+
+ high accuracy , apply multiple network input . 
+ combine network require twice compute power , 
+ application , high accuracy important add 
+ complexity worth . possible custom analog 
+ vlsi neural - net chip ( jackel et al . , 1990 ; graf henderson , 1990 ) , 
+ price / performance ratio drop point cost multiplenetwork recognition immaterial . 
+
+ case , way achieve considerable improvement 
+ doubling computation , " multi - level rejection " 
+ follow : pass second network case assign 
+ low confidence network . computation increase 
+ fraction case need pass " second opinion . " case 
+ a+b appear table 1 , need pass 14 % percent 
+ digit second recognition maintain level performance 
+ 1 % 2 % error rate . order maintain performance 0.5 % 
+ error rate , pass 39 % second recognizer . 
+
+ 3 classification probability estimation 
+
+ output network set activation level output layer . 
+ previous section , task simply choose , accord 
+ value , possible outcome : rejection , classification 
+ class . attempt assign probability 
+ possible outcome . section present method normalize 
+ output activation level , form good estimator 
+ probability . 
+
+ ability estimate probability input belong class 1 
+ great theoretical practical importance . give ability able 
+ model classifier performance . combine cost model 
+ tune system minimize cost . possibility deal 
+ activity level output layer . case character recognition , 
+ knowledge probability single character recognition make possible 
+ calculate probability multiple character recognition reject 
+
+ - field basis . 
+
+ john bridle recently propose normalization scheme classifier 
+ n mutually - exclusive outcome ( bridle , 1989 ) . scheme , 
+ name softmax , apply post - processor " raw output " 
+ neural network . softmax appeal output positive sum 
+ 1 , satisfy axiom probability theory . softmax output 
+ increase function corresponding raw output ( 
+ output hold constant ) preserve ordering class . 
+ interesting theoretical quality softmax , connection 
+ entropy system ( bridle , 1989 ) . form softmax 
+ following : 
+
+ " dg ef om 
+
+ oq , activation level output unit , s , softmax 
+ score class i. slightly modify function add 
+ additional term denominator : 
+
+ 260 . 
+ 5 , = e ® + de cfr 
+
+ term involve essentially represent activation level 
+ artificial n+1st category , " " category . cause 
+ reduction score high active unit low absolute value . 
+
+ softmax consider competition - active unit 
+ ( simple rejection scheme previous section 
+ consider competition class ) . test conduct softmax appropriate value 3 give essentially 
+ identical rejection performance simple scheme . indicate 
+ relatively case - way tie second place . 
+
+ discrete ( " / - " ) single - digit rejection decision , immaterial ; main importance enable tune softmax reliable 
+ probability estimator probable candidate class return 
+ neural network classifier . figure 2 softmax score " winner " 
+ class plot versus percentage case class fact 
+ correct answer . distribution softmax score plot . 
+ raw recognition rate 90 % population 
+ concentrated small histogram . , 
+
+ % correct % total patterns 
+ 1 1 
+
+ 94 9 
+
+ 84 8 
+
+ 74 7 
+
+ 64 6 
+
+ 54 5 
+
+ 4 ) 4 
+
+ 34 3 
+
+ 24 2 
+
+ 1 
+
+ ° 0 4 567 8 9 ° 0 t 23 4 5 67 8 9 
+ ( ) softmax score ( b ) softmax score 
+
+ figure 2 : ( ) percentage correct classification vs. softmax score 
+ supply classifier high scoring candidate ( 3 = 3.75,a = 5 ) . 
+ population distribution score test set plot ( b ) . 
+
+ softmax score give good indication probability correctness 
+ classification . figure 3 function plot second 
+ high scoring class ( " runner " ) . case population 
+ concentrate low scoring value . , , softmax 
+ good estimation probability class correct answer . 
+
+ 4 cost , rejection error 
+
+ previous section discuss method process output 
+ layer neural network order enhance productivity classifying system . post - processing stage great practical importance 
+ make acceptance / rejection decision . issue address 
+ extent importance cost acceptance / rejection / error . 
+ parameter usually minimize lab rejection rate 
+ constant error rate vice versa . good measure assess 
+ technology measure technical advancement . 
+ real - world system , true parameter want minimize cost , 
+ , cost model incorporate rejection parameter . typical example digit zip code . error 
+ digit costly error digit . information encode rejection value digit question . 
+
+ % correct % total patterns 
+ 1 1 
+
+ j © | 94 
+
+ 8 8 
+
+ 7 7 ] 
+
+ 64 64 
+
+ 5 ] 54 
+
+ 44 4 
+
+ 24 24 
+
+ 1d 1 , 
+
+ 0 0 
+ 0 4 5 67 8 9 0 12 3 4 5 6 7 8 9 
+ ( ) softmax score ( b ) softmax score 
+
+ figure 3 : ( ) percentage correct classification vs. softmax 
+ score supply classifier second high scoring candidate 
+ ( 6 = 3.75,a = 5 ) . population distribution score second candidate test set plot ( b ) . 
+
+ conclusion recognition engine 
+ , acceptance / rejection decision tune ta local 
+ problem . knowledge majority mail stream local 
+ incorporate rejection scheme enhance cost / performance 
+ typical zipcode . 
+
+ summary 
+
+ present technique enhance neural network classification apply zipcode digit recognition problem . 
+ result present far systematic study , promise 
+ encourage work . 
+
+ work ( denker le cun , 1990 ) bring view 
+ propagation neural network stage classification 
+ process . output network feed post - processing stage 
+ use knowledge neural network problem 
+ try solve . stage process generate superior performance 
+ expect stand - neural - network . 
+
+ acknowledgement 
+
+ thank postal service contractor provide 
+ zipcode database . thank henry baird provide print 
+ font database . grateful rodolfo milito comment 
+ manuscript . 
+
+ reference 
+
+ bridle , j. s. ( 1989 ) . probabilistic interpretation feedforward classification network outputs relationships statistical pattern 
+ recognition . fougelman - soulie , f. hérault , j. , editor , neurocomputing : algorithm , architecture application . springer - verlag . 
+
+ denker , j. s. le cun , y. ( 1990 ) . unpublishe . 
+
+ graf , h. p. henderson , d. ( 1990 ) . reconfigurable cmos neural 
+ network . isscc dig . tech . paper . ieee int . solid - state circuits 
+
+ conference . 
+
+ jackel , l. d. , graf , h. p. , boser , b. , denker , j. s. , le cun , y. , howard , 
+ r. e. , matan , o. , baird , h. s. ( 1990 ) . hardware considerations 
+ neural - net character recognition systems . simon , j. , editor , 
+ pizels feature , ( bonas , france 1990 ) . 
+
+ le cun , y. , matan , o. , boser , b. , denker , j. s. , henderson , d. , howard , 
+ r. e. , hubbard , w. , jackel , l. d. , baird , h. s. ( 1990 ) . handwritten zip code recognition multilayer networks . proceedings 
+ 10th international conference pattern recognition , ( atlantic 
+ city , nj , 1990 ) . ieee computer society press . 
+
+ rumelhart , d. e. , hinton , g. e. , williams , r. j. ( 1986 ) . learning 
+ internal representation error propagation . parallel distribute 
+ processing : exploration microstructure cognition , volume , 
+ page 318 - 362 . bradford books , cambridge , ma .

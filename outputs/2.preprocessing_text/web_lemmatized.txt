@@ -1,0 +1,70 @@
+rag evaluation metric : journey metric 
+ explore rag evaluation metric like bleu score , rouge score , ppl , bartscore , . discover elastic evaluate rag unieval . 
+ seamlessly connect lead ai machine learning platform . start free cloud trial explore elastic gen ai capability try machine . 
+ 2020 , meta publish paper title " retrieval - augmented generation knowledge - intensive nlp tasks " . paper introduce method expand knowledge language models ( llms ) initial training datum leverage external database . , approach garner significant attention researcher remain prominent highly discuss topic substantial benefit . advantage encompass ease update knowledge database , enable small model match performance large model specific task , allow generation generalize domain outside training datum , reduce occurrence hallucination , . 
+ experiment discovery invariably revolve measure model performance give task . unfortunately , assess quality generate text pose significant challenge , give inherent openness permissiveness . " search " scenario , exist " ideal " document ranking , allow straightforward comparison gauge closely align ideal ranking . , come evaluate quality generate text term answer question summarize content , task considerably complex . 
+ blog , primary focus rag ( retrieval - augmented generation ) question answer task specifically closed - domain qa . delve metric commonly employ field . thoroughly explore metric explain decision elastic effectively monitor model performance . 
+ n - gram metric 
+ family metric , idea check similar generate text " ground truth " . variation base idea , talk . 
+ bleu score 
+ - bleu score : bilingual evaluation understudy , know bleu , metric employ assess quality machine - generate passage compare multiple reference passage . quantify resemblance analyze presence share n - gram ( sequence n consecutive word ) . bleu score assign range 0 1 , high score signify close alignment generate text reference text ( ) . 
+ fig.1 - 1 - gram precision ( call bleu-1 ) calculate bleu build score different n - gram additional factor brevity 
+ rouge score 
+ - rouge score : recall - orient understudy gisting evaluation usually assess effectiveness machine - generate summary . evaluate similar generate passage reference passage count share word phrase . rouge differ bleu scoring , calculate recall , bleu calculate precision . mean rouge primarily focus determine information reference passage contain generate passage . characteristic make rouge popular choice task relate summarization . 
+ meteor score 
+ - meteor score : metric evaluation translation explicit ordering metric widely field machine generation . meteor differ previously mention metric incorporate harmonic mean precision recall . additionally , take synonyms , stemming word order ( fragmentation penalty ) account assess word match . attribute contribute meteor achieve strong correlation human judgment compare bleu . 
+ metric serve valuable tool quick straightforward evaluation llms , certain limitation render ideal . begin , fall short come assess fluency , coherence , overall meaning passage . relatively insensitive word order . furthermore , despite meteor attempt address issue synonyms stemming , evaluation tool lack semantic knowledge , make blind semantic variation . problem particularly acute assess long text effectively , treat text mere bag passage overly simplistic . additionally , reliance ' template answer ' make expensive use large - scale evaluation introduce bias exact phraseology template . lastly , specific task , study reveal correlation bleu rouge score human judgment actually low . reason , researcher try find improved metric . 
+ intrinsic metric 
+ perplexity ( ppl ) 
+ perplexity ( abbreviate ppl ) stand common metric assess language models ( llms ) . calculate perplexity necessitate have access probability distribution word generate model . measure confidently model able predict sequence word . high perplexity , confidently model predict observe sequence . formally , define follow : 
+ log predict probability token condition token ( ! = ) sentence accord model . illustrate , example perplexity compute model vocabulary word . 
+ fig.2 - perplexity score example 
+ significant benefit perplexity speed compute solely rely output probability involve external model . additionally , tend strong correlation quality model ( correlation vary depend test dataset ) . 
+ nonetheless , perplexity come certain limitation pose challenge . firstly , rely information density model , make difficult compare model differ vocabulary size context length . impossible compare score dataset , evaluation datum intrinsically high perplexity . , overly sensitive vocabulary discrepancy , potentially penalize model express answer differently , version valid . lastly , perplexity - suit evaluate model ability handle language ambiguity , creativity , hallucination . ambiguity especially , word poorly determine rest sequence push perplexity , indicator poor generation understanding . potentially penalize model understand ambiguity well capable . shortcoming , nlp community explore advanced extrinsic metric address issue . 
+ model - base metric 
+ intrinsic n - gram metric significant drawback leverage semantic understanding evaluate accuracy generate content . consequently , align closely human judgement want . model - base metric emerge promising solution tackle issue . 
+ bertscore 
+ - bertscore : understand sentence mean semantic standpoint , bertscore use famous transformer - base model bert . look sentence want evaluate reference sentence , compare similar leverage contextual embedding token sentence . final score compute weighted combination cosine similarity close token pair . 
+ bleurt 
+ - bleurt : basic concept closely resemble bertscore , rely transformer - base model assess similarity reference text candidate text . , bleurt training incorporate crucial enhancement . , use pre - training step dataset randomize change base wikipedia content simulate generate output variability . additionally , use fine - tuning step incorporate human rating refine performance . 
+ bartscore 
+ - bartscore : idea translate problem evaluate generate text text generation problem . specifically train sequence - - sequence model base bart , capable get score weighted log probability generate text y give input text x. bartscore support evaluation generate text different perspective ( faithfulness , precision , recall , … ) make powerful . 
+ fig.3 - kendall tau correlation different metric wmt19 dataset bartscore paper 
+ bertscore bleurt see essentially n - gram recall contextual representation . bartscore , end , close perplexity measurement , target generate text , critic model model . model - base metric offer strong evaluation capability , slow bleu ppl involve external model . relatively low correlation bleu human judgement generation context mean trade - justify . simple similarity base metric popular select llm ( see hugging face leaderboard ) . approach serve reasonable proxy , give capability current state art llms sufficient . 
+ unieval : elastic choice evaluate rag 
+ unieval unify evaluation dimension boolean question answering framework , allow single model assess generate text angle . example , evaluation dimension relevance , ask model directly " relevant answer question ? " . give set task determine evaluation dimension , model train able evaluate generate text respect dimension . employ t5 foundational model , unieval use - step training process . initial step , call " intermediate multitask learning " , utilize query context address multiple task unify boolean qa task pre - exist relevant dataset . subsequently , second step entail sequential training , model learn , dimension dimension , evaluate distinct aspect generate text . pre - train unieval model gear summarization , think rag question answering view aggressive summarization task avoid parametric memory accurate response . train follow dimension : 
+ - coherence , gauge formation cohesive body sentence . 
+ - consistency , assess factual alignment answer context . 
+ - fluency , evaluate quality individual sentence . 
+ - relevance , measure factual alignment answer ground truth . 
+ fig.4 - pearson spearman correlation topical - chat benchmark average unieval dimension 
+ unieval powerful , currently hold title " state - - - art " evaluation model , writing . gpt - base evaluator , like g - eval , potentially strong correlation human judgment unieval ( context gpt-4 base evaluator ) . , essential consider significant cost difference . unieval 800 - million - parameter model , gpt-4 estimate boast massive 1.76 trillion parameter . firmly believe slight advantage see g - eval-4 justify substantial increase cost . 
+ real - world usage unieval 
+ start explore unieval , intend incorporate numerous exciting project involve text generation future . , arm evaluation model , decide test capability address specific question . 
+ easily compare llms quality unieval ? 
+ likely consideration come mind evaluation metric . effective tool predict quality llms ? conduct benchmark test mistral-7b - instruct falcon-7b - instruct assess distinguishable model term fluency , consistency , coherence , relevance . benchmarking , employ 200 query 18 dataset , ensure diverse range contexts ( include bioasq , boolq , coqa , cosmosqa , hagrid , hotpotqa , msmarco , multispanqa , narrativeqa , newsqa , nq , popqa , quac , searchqa , sleepqa , squad , toolqa , triviaqa , truthfulqa ) . prompt give mistral / falcon include query context contain information need answer query . 
+ fig.5 - unieval evaluation mistral falcon distribution score 3600 query . high score well . 
+ specific instance , evident mistral outperform falcon evaluation dimension , make decision straightforward . , challenging case , particularly decide relevance consistency , crucial question answer rag . 
+ " consistency score " correlate number hallucination generate model ? 
+ experiment straightforward . gather 100 query squad 2.0 dataset . , assess model ( specifically mistral-7b - instruct - v0.1 instance , model ) unieval . follow , manually examine annotate generate text exhibit hallucination . afterward , create calibration curve check " consistency score " serve reliable predictor probability hallucination . simple term , investigate " consistency score " number hallucination correlate . 
+ fig.6 - calibration curve consistency hallucination detection 
+ observe , consistency turn reliable indicator probability hallucination , flawless . encounter situation hallucination subtle challenging identify . additionally , model test occasionally provide correct answer originate prompt context parametric memory . term consistency metric , resemble hallucination , answer accurate . , average , detect hallucination actual true number . worth note , certain experiment deliberately include mislead prompt , manage mislead generation process evaluation . prove unieval silver bullet . 
+ decode strategy impact evaluation dimension ? 
+ experiment , want compare different way decode information falcon-7b - instruct . try method 18 dataset , 5 query dataset ( 90 query total ): 
+ - greedy decoding , choose likely token . 
+ - beam decoding , involve maintain multiple possible path select high overall probability ( 5 beam ) . 
+ - topk decode , select candidate , redistribute probability , sample token ( k value 4 ) . 
+ - nucleus decoding , similar topk variable number candidate base probability mass threshold ( threshold=0.95 , max_topk=50 ) . 
+ - contrastive decoding , apply penalty candidate encourage diversity selection process ( penalty_alpha=0.6 , topk=4 ) . 
+ fig.7 - decode strategy benchmark unieval 
+ accord early study , effective method contrastive decoding . important note greedy decoding hold reasonably context , recognize somewhat constrain strategy . attribute focus short answer ( maximum 64 new token ) possibility unieval accurately assess " diversity " aspect . 
+ conclusion 
+ blog , aim insight challenge involve evaluate llms , particularly context question answer rag . field early stage , numerous paper publish subject . unieval cure - solution , find compelling approach offer precise assessment rag pipeline perform . mark initial step ongoing research endeavor elastic . , objective enhance search experience , believe solution like unieval , similar approach , contribute development valuable tool user . 
+ release timing feature functionality describe post remain elastic sole discretion . feature functionality currently available deliver time . 
+ elastic , elasticsearch associated mark trademark , logo register trademark elasticsearch n.v. united states country . company product name trademark , logo register trademark respective owner . 
+ frequently ask questions 
+ metric commonly evaluate rag ? 
+ metric evaluate rag , : n - gram metric ( include bleu score , rouge score & meteor score ) , intrinsic metric ( like ppl ) , model - base metric ( bertscore , bleurt bartscore ) , elastic choice : unieval . 
+ unieval evaluate rag ? 
+ unieval evaluate rag unify evaluation dimension boolean question answering framework , allow single model assess generate text angle . 
+ helpful content ?

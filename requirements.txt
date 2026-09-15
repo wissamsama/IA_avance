@@ -1,0 +1,13 @@
+pypdf
+requests
+trafilatura
+ipykernel
+pytesseract
+pymupdf
+pillow
+spacy
+nltk
+pandas
+scikit-learn
+matplotlib
+openpyxl

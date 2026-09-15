@@ -1,0 +1,822 @@
+provid proper attribut provid , googl grant permiss 
+ reproduc tabl figur paper sole use journalist 
+ scholarli work . 
+ attent need 
+ ashish vaswani∗ 
+ googl brain 
+ avaswani@google.com 
+ noam shazeer∗ 
+ googl brain 
+ noam@google.com 
+ niki parmar∗ 
+ googl research 
+ nikip@google.com 
+ jakob uszkoreit∗ 
+ googl research 
+ usz@google.com 
+ llion jones∗ 
+ googl research 
+ llion@google.com 
+ aidan n. gomez∗† 
+ univers toronto 
+ aidan@cs.toronto.edu 
+ łukasz kaiser∗ 
+ googl brain 
+ lukaszkaiser@google.com 
+ illia polosukhin∗‡ 
+ illia.polosukhin@gmail.com 
+ abstract 
+ domin sequenc transduct model base complex recurr 
+ convolut neural network includ encod decod . best 
+ perform model connect encod decod attent 
+ mechan . propos new simpl network architectur , transform , 
+ base sole attent mechan , dispens recurr convolut 
+ entir . experi machin translat task model 
+ superior qualiti paralleliz requir significantli 
+ time train . model achiev 28.4 bleu wmt 2014 englishto - german translat task , improv exist best result , includ 
+ ensembl , 2 bleu . wmt 2014 english - - french translat task , 
+ model establish new singl - model state - - - art bleu score 41.8 
+ train 3.5 day gpu , small fraction train cost 
+ best model literatur . transform gener 
+ task appli success english constitu pars 
+ larg limit train data . 
+ ∗equal contribut . list order random . jakob propos replac rnn self - attent start 
+ effort evalu idea . ashish , illia , design implement transform model 
+ crucial involv aspect work . noam propos scale dot - product attent , multi - head 
+ attent paramet - free posit represent person involv nearli 
+ detail . niki design , implement , tune evalu countless model variant origin codebas 
+ tensor2tensor . llion experi novel model variant , respons initi codebas , 
+ effici infer visual . lukasz aidan spent countless long day design part 
+ implement tensor2tensor , replac earlier codebas , greatli improv result massiv acceler 
+ research . 
+ †work perform googl brain . 
+ ‡work perform googl research . 
+ 31st confer neural inform process system ( nip 2017 ) , long beach , , usa . 
+ arxiv:1706.03762v7 [ cs . cl ] 2 aug 2023 
+
+ 1 introduct 
+ recurr neural network , long short - term memori [ 13 ] gate recurr [ 7 ] neural network 
+ particular , firmli establish state art approach sequenc model 
+ transduct problem languag model machin translat [ 35 , 2 , 5 ] . numer 
+ effort continu push boundari recurr languag model encod - decod 
+ architectur [ 38 , 24 , 15 ] . 
+ recurr model typic factor comput symbol posit input output 
+ sequenc . align posit step comput time , gener sequenc hidden 
+ statesht , function previou hidden stateht−1 input positiont . inher 
+ sequenti natur preclud parallel train exampl , critic longer 
+ sequenc length , memori constraint limit batch exampl . recent work achiev 
+ signific improv comput effici factor trick [ 21 ] condit 
+ comput [ 32 ] , improv model perform case . fundament 
+ constraint sequenti comput , , remain . 
+ attent mechan integr compel sequenc model transduct model task , allow model depend regard distanc 
+ input output sequenc [ 2 , 19 ] . case [ 27 ] , , attent mechan 
+ conjunct recurr network . 
+ work propos transform , model architectur eschew recurr instead 
+ reli entir attent mechan draw global depend input output . 
+ transform allow significantli parallel reach new state art 
+ translat qualiti train littl hour p100 gpu . 
+ 2 background 
+ goal reduc sequenti comput form foundat extend neural gpu 
+ [ 16 ] , bytenet [ 18 ] convs2 [ 9 ] , use convolut neural network basic build 
+ block , comput hidden represent parallel input output posit . model , 
+ number oper requir relat signal arbitrari input output posit grow 
+ distanc posit , linearli convs2 logarithm bytenet . make 
+ difficult learn depend distant posit [ 12 ] . transform 
+ reduc constant number oper , albeit cost reduc effect resolut 
+ averag attent - weight posit , effect counteract multi - head attent 
+ describ section 3.2 . 
+ self - attent , call intra - attent attent mechan relat differ posit 
+ singl sequenc order comput represent sequenc . self - attent 
+ success varieti task includ read comprehens , abstract summar , 
+ textual entail learn task - independ sentenc represent [ 4 , 27 , 28 , 22 ] . 
+ end - - end memori network base recurr attent mechan instead sequencealign recurr shown perform simpl - languag question answer 
+ languag model task [ 34 ] . 
+ best knowledg , , transform transduct model reli 
+ entir self - attent comput represent input output sequencealign rnn convolut . follow section , describ transform , motiv 
+ self - attent discuss advantag model [ 17 , 18 ] [ 9 ] . 
+ 3 model architectur 
+ competit neural sequenc transduct model encod - decod structur [ 5 , 2 , 35 ] . 
+ , encod map input sequenc symbol represent ( x1, ... ,x n ) sequenc 
+ continu represent z = ( z1, ... ,z n ) . given z , decod gener output 
+ sequenc ( y1, ... ,y m ) symbol element time . step model auto - regress 
+ [ 10 ] , consum previous gener symbol addit input gener . 
+
+ figur 1 : transform - model architectur . 
+ transform follow overal architectur stack self - attent point - wise , fulli 
+ connect layer encod decod , shown left right halv figur 1 , 
+ respect . 
+ 3.1 encod decod stack 
+ encod : encod compos stack n = 6 ident layer . layer 
+ sub - layer . multi - head self - attent mechan , second simpl , positionwis fulli connect feed - forward network . employ residu connect [ 11 ] 
+ sub - layer , follow layer normal [ 1 ] . , output sub - layer 
+ layernorm(x + sublayer(x ) ) , sublayer(x ) function implement sub - layer 
+ . facilit residu connect , sub - layer model , embed 
+ layer , produc output dimensiondmodel = 512 . 
+ decod : decod compos stack ofn = 6 ident layer . addit 
+ sub - layer encod layer , decod insert sub - layer , perform multi - head 
+ attent output encod stack . similar encod , employ residu connect 
+ sub - layer , follow layer normal . modifi self - attent 
+ sub - layer decod stack prevent posit attend subsequ posit . 
+ mask , combin fact output embed offset posit , ensur 
+ predict positioni depend known output posit thani . 
+ 3.2 attent 
+ attent function describ map queri set key - valu pair output , 
+ queri , key , valu , output vector . output comput weight sum 
+
+ scale dot - product attent 
+ multi - head attent 
+ figur 2 : ( left ) scale dot - product attent . ( right ) multi - head attent consist 
+ attent layer run parallel . 
+ valu , weight assign valu comput compat function 
+ queri correspond key . 
+ 3.2.1 scale dot - product attent 
+ particular attent " scale dot - product attent " ( figur 2 ) . input consist 
+ queri key dimensiondk , valu dimensiondv . comput dot product 
+ queri key , divid by√dk , appli softmax function obtain weight 
+ valu . 
+ practic , comput attent function set queri simultan , pack 
+ matrixq. key valu pack matricesk andv . comput 
+ matrix output : 
+ attention(q , k , v ) = softmax(qk t 
+ √dk 
+ ) v ( 1 ) 
+ commonli attent function addit attent [ 2 ] , dot - product ( multipl ) attent . dot - product attent ident algorithm , scale factor 
+ 1√dk 
+ . addit attent comput compat function feed - forward network 
+ singl hidden layer . similar theoret complex , dot - product attent 
+ faster space - effici practic , implement highli optim 
+ matrix multipl code . 
+ small valu ofdk mechan perform similarli , addit attent outperform 
+ dot product attent scale larger valu ofdk [ 3 ] . suspect larg valu 
+ dk , dot product grow larg magnitud , push softmax function region 
+ extrem small gradient 4 . counteract effect , scale dot product 1√dk 
+ . 
+ 3.2.2 multi - head attent 
+ instead perform singl attent function withdmodel - dimension key , valu queri , 
+ found benefici linearli project queri , key valuesh time differ , learn 
+ linear project todk , dk anddv dimens , respect . project version 
+ queri , key valu perform attent function parallel , yieldingdv - dimension 
+ 4to illustr dot product larg , assum compon q k independ random 
+ variabl mean 0 varianc 1 . dot product , q · k = pdk 
+ i=1 qiki , mean 0 varianc dk . 
+
+ output valu . concaten project , result final valu , 
+ depict figur 2 . 
+ multi - head attent allow model jointli attend inform differ represent 
+ subspac differ posit . singl attent head , averag inhibit . 
+ multihead(q , k , v ) = concat(head 1 , ... , headh)w o 
+ headi = attention(qw q 
+ , kw k 
+ , vw v 
+ ) 
+ project paramet matricesw q 
+ ∈ rdmodel×dk , w k 
+ ∈ rdmodel×dk , w v 
+ ∈ rdmodel×dv 
+ andw o∈ rhdv×dmodel . 
+ work employ h = 8 parallel attent layer , head . use 
+ dk = dv = dmodel / h = 64 . reduc dimens head , total comput cost 
+ similar singl - head attent dimension . 
+ 3.2.3 applic attent model 
+ transform use multi - head attent differ way : 
+ • " encod - decod attent " layer , queri come previou decod layer , 
+ memori key valu come output encod . allow 
+ posit decod attend posit input sequenc . mimic 
+ typic encod - decod attent mechan sequenc - - sequenc model 
+ [ 38 , 2 , 9 ] . 
+ • encod contain self - attent layer . self - attent layer key , valu 
+ queri come place , case , output previou layer 
+ encod . posit encod attend posit previou layer 
+ encod . 
+ • similarli , self - attent layer decod allow posit decod attend 
+ posit decod includ posit . need prevent leftward 
+ inform flow decod preserv auto - regress properti . implement 
+ insid scale dot - product attent mask ( set to−∞ ) valu input 
+ softmax correspond illeg connect . figur 2 . 
+ 3.3 posit - wise feed - forward network 
+ addit attent sub - layer , layer encod decod contain fulli 
+ connect feed - forward network , appli posit separ ident . 
+ consist linear transform relu activ . 
+ ffn(x ) = max(0,xw 1 + b1)w2 + b2 ( 2 ) 
+ linear transform differ posit , use differ paramet 
+ layer layer . way describ convolut kernel size 1 . 
+ dimension input output dmodel = 512 , inner - layer dimension 
+ df f = 2048 . 
+ 3.4 embed softmax 
+ similarli sequenc transduct model , use learn embed convert input 
+ token output token vector dimensiondmodel . use usual learn linear transform softmax function convert decod output predict - token probabl . 
+ model , share weight matrix embed layer pre - softmax 
+ linear transform , similar [ 30 ] . embed layer , multipli weight by√dmodel . 
+
+ tabl 1 : maximum path length , - layer complex minimum number sequenti oper 
+ differ layer types.n sequenc length , d represent dimens , k kernel 
+ size convolut andr size neighborhood restrict self - attent . 
+ layer type complex layer sequenti maximum path length 
+ oper 
+ self - attent o(n2·d ) o(1 ) o(1 ) 
+ recurr o(n·d2 ) o(n ) o(n ) 
+ convolut o(k·n·d2 ) o(1 ) o(logk(n ) ) 
+ self - attent ( restrict ) o(r·n·d ) o(1 ) o(n / r ) 
+ 3.5 posit encod 
+ model contain recurr convolut , order model use 
+ order sequenc , inject inform rel absolut posit 
+ token sequenc . end , add " posit encod " input embed 
+ bottom encod decod stack . posit encod dimensiondmodel 
+ embed , sum . choic posit encod , 
+ learn fix [ 9 ] . 
+ work , use sine cosin function differ frequenc : 
+ pe ( pos,2i ) = sin(pos/100002i / dmodel ) 
+ pe ( pos,2i+1 ) = cos(pos/100002i / dmodel ) 
+ wherepo posit andi dimens . , dimens posit encod 
+ correspond sinusoid . wavelength form geometr progress 2π 10000 · 2π . 
+ chose function hypothes allow model easili learn attend 
+ rel posit , fix offsetk , pe pos+k repres linear function 
+ pe po . 
+ experi learn posit embed [ 9 ] instead , found 
+ version produc nearli ident result ( tabl 3 row ( e ) ) . chose sinusoid version 
+ allow model extrapol sequenc length longer one encount 
+ train . 
+ 4 self - attent 
+ section compar aspect self - attent layer recurr convolut layer commonli map variabl - length sequenc symbol represent 
+ ( x1, ... ,x n ) sequenc equal length ( z1, ... ,z n ) , xi , z i∈ rd , hidden 
+ layer typic sequenc transduct encod decod . motiv use self - attent 
+ consid desiderata . 
+ total comput complex layer . comput 
+ parallel , measur minimum number sequenti oper requir . 
+ path length long - rang depend network . learn long - rang 
+ depend key challeng sequenc transduct task . key factor affect 
+ abil learn depend length path forward backward signal 
+ travers network . shorter path combin posit input 
+ output sequenc , easier learn long - rang depend [ 12 ] . compar 
+ maximum path length input output posit network compos 
+ differ layer type . 
+ note tabl 1 , self - attent layer connect posit constant number sequenti 
+ execut oper , recurr layer requir o(n ) sequenti oper . term 
+ comput complex , self - attent layer faster recurr layer sequenc 
+
+ length n smaller represent dimension d , case 
+ sentenc represent state - - - art model machin translat , word - piec 
+ [ 38 ] byte - pair [ 31 ] represent . improv comput perform task involv 
+ long sequenc , self - attent restrict consid neighborhood sizer 
+ input sequenc center respect output posit . increas maximum 
+ path length too(n / r ) . plan investig approach futur work . 
+ singl convolut layer kernel widthk < n connect pair input output 
+ posit . requir stack ofo(n / k ) convolut layer case contigu kernel , 
+ oro(logk(n ) ) case dilat convolut [ 18 ] , increas length longest path 
+ posit network . convolut layer gener expens 
+ recurr layer , factor k. separ convolut [ 6 ] , , decreas complex 
+ consider , too(k·n·d + n·d2 ) . k = n , , complex separ 
+ convolut equal combin self - attent layer point - wise feed - forward layer , 
+ approach model . 
+ benefit , self - attent yield interpret model . inspect attent distribut 
+ model present discuss exampl appendix . individu attent 
+ head clearli learn perform differ task , appear exhibit behavior relat syntact 
+ semant structur sentenc . 
+ 5 train 
+ section describ train regim model . 
+ 5.1 train data batch 
+ train standard wmt 2014 english - german dataset consist 4.5 million 
+ sentenc pair . sentenc encod byte - pair encod [ 3 ] , share sourcetarget vocabulari 37000 token . english - french , significantli larger wmt 
+ 2014 english - french dataset consist 36 m sentenc split token 32000 word - piec 
+ vocabulari [ 38 ] . sentenc pair batch approxim sequenc length . train 
+ batch contain set sentenc pair contain approxim 25000 sourc token 25000 
+ target token . 
+ 5.2 hardwar schedul 
+ train model machin 8 nvidia p100 gpu . base model 
+ hyperparamet describ paper , train step took 0.4 second . 
+ train base model total 100,000 step 12 hour . big models,(describ 
+ line tabl 3 ) , step time 1.0 second . big model train 300,000 step 
+ ( 3.5 day ) . 
+ 5.3 optim 
+ adam optim [ 20 ] withβ1 = 0.9,β2 = 0.98 andϵ = 10−9 . vari learn 
+ rate cours train , accord formula : 
+ lrate = d−0.5 
+ model · min(step_num−0.5,step _ num·warmup_steps−1.5 ) ( 3 ) 
+ correspond increas learn rate linearli firstwarmup_step train step , 
+ decreas proport invers squar root step number . 
+ warmup_step = 4000 . 
+ 5.4 regular 
+ employ type regular train : 
+
+ tabl 2 : transform achiev better bleu score previou state - - - art model 
+ english - - german english - - french newstest2014 test fraction train cost . 
+ model 
+ bleu train cost ( flop ) 
+ en - de en - fr en - de en - fr 
+ bytenet [ 18 ] 23.75 
+ deep - att + posunk [ 39 ] 39.2 1.0 · 1020 
+ gnmt + rl [ 38 ] 24.6 39.92 2.3 · 1019 1.4 · 1020 
+ convs2 [ 9 ] 25.16 40.46 9.6 · 1018 1.5 · 1020 
+ moe [ 32 ] 26.03 40.56 2.0 · 1019 1.2 · 1020 
+ deep - att + posunk ensembl [ 39 ] 40.4 8.0 · 1020 
+ gnmt + rl ensembl [ 38 ] 26.30 41.16 1.8 · 1020 1.1 · 1021 
+ convs2 ensembl [ 9 ] 26.36 41.29 7.7 · 1019 1.2 · 1021 
+ transform ( base model ) 27.3 38.1 3.3 · 1018 
+ transform ( big ) 28.4 41.8 2.3 · 1019 
+ residu dropout appli dropout [ 33 ] output sub - layer , ad 
+ sub - layer input normal . addit , appli dropout sum embed 
+ posit encod encod decod stack . base model , use rate 
+ pdrop = 0.1 . 
+ label smooth train , employ label smooth valu ϵl = 0.1 [ 36 ] . 
+ hurt perplex , model learn unsur , improv accuraci bleu score . 
+ 6 result 
+ 6.1 machin translat 
+ wmt 2014 english - - german translat task , big transform model ( transform ( big ) 
+ tabl 2 ) outperform best previous report model ( includ ensembl ) 2.0 
+ bleu , establish new state - - - art bleu score 28.4 . configur model 
+ list line tabl 3 . train took 3.5 day 8 p100 gpu . base model 
+ surpass previous publish model ensembl , fraction train cost 
+ competit model . 
+ wmt 2014 english - - french translat task , big model achiev bleu score 41.0 , 
+ outperform previous publish singl model , 1/4 train cost 
+ previou state - - - art model . transform ( big ) model train english - - french 
+ dropout ratepdrop = 0.1 , instead 0.3 . 
+ base model , singl model obtain averag 5 checkpoint , 
+ written 10 - minut interv . big model , averag 20 checkpoint . 
+ beam search beam size 4 length penaltyα = 0.6 [ 38 ] . hyperparamet 
+ chosen experiment develop set . set maximum output length 
+ infer input length + 50 , termin earli possibl [ 38 ] . 
+ tabl 2 summar result compar translat qualiti train cost model 
+ architectur literatur . estim number float point oper train 
+ model multipli train time , number gpu , estim sustain 
+ singl - precis float - point capac gpu 5 . 
+ 6.2 model variat 
+ evalu import differ compon transform , vari base model 
+ differ way , measur chang perform english - - german translat 
+ 5we valu 2.8 , 3.7 , 6.0 9.5 tflop k80 , k40 , m40 p100 , respect . 
+
+ tabl 3 : variat transform architectur . unlist valu ident base 
+ model . metric english - - german translat develop set , newstest2013 . list 
+ perplex - wordpiec , accord byte - pair encod , compar 
+ - word perplex . 
+ n d model dff h d k dv pdrop ϵl 
+ train ppl bleu param 
+ step ( dev ) ( dev ) ×106 
+ base 6 512 2048 8 64 64 0.1 0.1 100 k 4.92 25.8 65 
+ ( ) 
+ 1 512 512 5.29 24.9 
+ 4 128 128 5.00 25.5 
+ 16 32 32 4.91 25.8 
+ 32 16 16 5.01 25.4 
+ ( b ) 16 5.16 25.1 58 
+ 32 5.01 25.4 60 
+ ( c ) 
+ 2 6.11 23.7 36 
+ 4 5.19 25.3 50 
+ 8 4.88 25.5 80 
+ 256 32 32 5.75 24.5 28 
+ 1024 128 128 4.66 26.0 168 
+ 1024 5.12 25.4 53 
+ 4096 4.75 26.2 90 
+ ( d ) 
+ 0.0 5.77 24.6 
+ 0.2 4.95 25.5 
+ 0.0 4.67 25.3 
+ 0.2 5.47 25.7 
+ ( e ) posit embed instead sinusoid 4.92 25.7 
+ big 6 1024 4096 16 0.3 300 k 4.33 26.4 213 
+ develop set , newstest2013 . beam search describ previou section , 
+ checkpoint averag . present result tabl 3 . 
+ tabl 3 row ( ) , vari number attent head attent key valu dimens , 
+ keep comput constant , describ section 3.2.2 . singl - head 
+ attent 0.9 bleu wors best set , qualiti drop head . 
+ tabl 3 row ( b ) , observ reduc attent key size dk hurt model qualiti . 
+ suggest determin compat easi sophist compat 
+ function dot product benefici . observ row ( c ) ( d ) , expect , 
+ bigger model better , dropout help avoid - fit . row ( e ) replac 
+ sinusoid posit encod learn posit embed [ 9 ] , observ nearli ident 
+ result base model . 
+ 6.3 english constitu pars 
+ evalu transform gener task perform experi english 
+ constitu pars . task present specif challeng : output subject strong structur 
+ constraint significantli longer input . furthermor , rnn sequenc - - sequenc 
+ model abl attain state - - - art result small - data regim [ 37 ] . 
+ train 4 - layer transform withdmodel = 1024 wall street journal ( wsj ) portion 
+ penn treebank [ 25 ] , 40 k train sentenc . train semi - supervis set , 
+ larger high - confid berkleypars corpora approxim 17 m sentenc 
+ [ 37 ] . vocabulari 16 k token wsj set vocabulari 32 k token 
+ semi - supervis set . 
+ perform small number experi select dropout , attent residu 
+ ( section 5.4 ) , learn rate beam size section 22 develop set , paramet 
+ remain unchang english - - german base translat model . infer , 
+
+ tabl 4 : transform gener english constitu pars ( result section 23 
+ wsj ) 
+ parser train wsj 23 f1 
+ vinyal & kaiser el al . ( 2014 ) [ 37 ] wsj , discrimin 88.3 
+ petrov et al . ( 2006 ) [ 29 ] wsj , discrimin 90.4 
+ zhu et al . ( 2013 ) [ 40 ] wsj , discrimin 90.4 
+ dyer et al . ( 2016 ) [ 8 ] wsj , discrimin 91.7 
+ transform ( 4 layer ) wsj , discrimin 91.3 
+ zhu et al . ( 2013 ) [ 40 ] semi - supervis 91.3 
+ huang & harper ( 2009 ) [ 14 ] semi - supervis 91.3 
+ mccloski et al . ( 2006 ) [ 26 ] semi - supervis 92.1 
+ vinyal & kaiser el al . ( 2014 ) [ 37 ] semi - supervis 92.1 
+ transform ( 4 layer ) semi - supervis 92.7 
+ luong et al . ( 2015 ) [ 23 ] multi - task 93.0 
+ dyer et al . ( 2016 ) [ 8 ] gener 93.3 
+ increas maximum output length input length + 300 . beam size 21 andα = 0.3 
+ wsj semi - supervis set . 
+ result tabl 4 despit lack task - specif tune model perform surprisingli , yield better result previous report model except 
+ recurr neural network grammar [ 8 ] . 
+ contrast rnn sequenc - - sequenc model [ 37 ] , transform outperform berkeley- 
+ parser [ 29 ] train wsj train set 40 k sentenc . 
+ 7 conclus 
+ work , present transform , sequenc transduct model base entir 
+ attent , replac recurr layer commonli encod - decod architectur 
+ multi - head self - attent . 
+ translat task , transform train significantli faster architectur base 
+ recurr convolut layer . wmt 2014 english - - german wmt 2014 
+ english - - french translat task , achiev new state art . task best 
+ model outperform previous report ensembl . 
+ excit futur attent - base model plan appli task . 
+ plan extend transform problem involv input output modal text 
+ investig local , restrict attent mechan effici handl larg input output 
+ imag , audio video . make gener sequenti research goal . 
+ code train evalu model avail https://github.com/ 
+ tensorflow / tensor2tensor . 
+ acknowledg grate nal kalchbrenn stephan gouw fruit 
+ comment , correct inspir . 
+ refer 
+ [ 1 ] jimmi lei ba , jami ryan kiro , geoffrey e hinton . layer normal . arxiv preprint 
+ arxiv:1607.06450 , 2016 . 
+ [ 2 ] dzmitri bahdanau , kyunghyun cho , yoshua bengio . neural machin translat jointli 
+ learn align translat . corr , abs/1409.0473 , 2014 . 
+ [ 3 ] denni britz , anna goldi , minh - thang luong , quoc v . le . massiv explor neural 
+ machin translat architectur . corr , abs/1703.03906 , 2017 . 
+ [ 4 ] jianpeng cheng , li dong , mirella lapata . long short - term memori - network machin 
+ read . arxiv preprint arxiv:1601.06733 , 2016 . 
+
+ [ 5 ] kyunghyun cho , bart van merrienbo , caglar gulcehr , fethi bougar , holger schwenk , 
+ yoshua bengio . learn phrase represent rnn encod - decod statist 
+ machin translat . corr , abs/1406.1078 , 2014 . 
+ [ 6 ] francoi chollet . xception : deep learn depthwis separ convolut . arxiv 
+ preprint arxiv:1610.02357 , 2016 . 
+ [ 7 ] junyoung chung , çaglar gülçehr , kyunghyun cho , yoshua bengio . empir evalu 
+ gate recurr neural network sequenc model . corr , abs/1412.3555 , 2014 . 
+ [ 8 ] chri dyer , adhiguna kuncoro , miguel ballestero , noah a. smith . recurr neural 
+ network grammar . proc . naacl , 2016 . 
+ [ 9 ] jona gehr , michael auli , david grangier , deni yarat , yann n. dauphin . convolut sequenc sequenc learn . arxiv preprint arxiv:1705.03122v2 , 2017 . 
+ [ 10 ] alex grave . gener sequenc recurr neural network . arxiv preprint 
+ arxiv:1308.0850 , 2013 . 
+ [ 11 ] kaim , xiangyu zhang , shaoq ren , jian sun . deep residu learn imag recognit . proceed ieee confer comput vision pattern 
+ recognit , page 770–778 , 2016 . 
+ [ 12 ] sepp hochreit , yoshua bengio , paolo frasconi , jürgen schmidhub . gradient flow 
+ recurr net : difficulti learn long - term depend , 2001 . 
+ [ 13 ] sepp hochreit jürgen schmidhub . long short - term memori . neural comput , 
+ 9(8):1735–1780 , 1997 . 
+ [ 14 ] zhongqiang huang mari harper . self - train pcfg grammar latent annot 
+ languag . proceed 2009 confer empir method natur 
+ languag process , page 832–841 . acl , august 2009 . 
+ [ 15 ] rafal jozefowicz , oriol vinyal , mike schuster , noam shazeer , yonghui wu . explor 
+ limit languag model . arxiv preprint arxiv:1602.02410 , 2016 . 
+ [ 16 ] łukasz kaiser sami bengio . activ memori replac attent ? advanc neural 
+ inform process system , ( nip ) , 2016 . 
+ [ 17 ] łukasz kaiser ilya sutskev . neural gpu learn algorithm . intern confer 
+ learn represent ( iclr ) , 2016 . 
+ [ 18 ] nal kalchbrenn , lass espeholt , karen simonyan , aaron van den oord , alex grave , koray kavukcuoglu . neural machin translat linear time.arxiv preprint arxiv:1610.10099v2 , 
+ 2017 . 
+ [ 19 ] yoon kim , carl denton , luong hoang , alexand m. rush . structur attent network . 
+ intern confer learn represent , 2017 . 
+ [ 20 ] diederik kingma jimmi ba . adam : method stochast optim . iclr , 2015 . 
+ [ 21 ] oleksii kuchaiev bori ginsburg . factor trick lstm network . arxiv preprint 
+ arxiv:1703.10722 , 2017 . 
+ [ 22 ] zhouhan lin , minwei feng , cicero nogueira do santo , mo yu , bing xiang , bowen 
+ zhou , yoshua bengio . structur self - attent sentenc embed . arxiv preprint 
+ arxiv:1703.03130 , 2017 . 
+ [ 23 ] minh - thang luong , quoc v . le , ilya sutskev , oriol vinyal , lukasz kaiser . multi - task 
+ sequenc sequenc learn . arxiv preprint arxiv:1511.06114 , 2015 . 
+ [ 24 ] minh - thang luong , hieu pham , christoph d man . effect approach attentionbas neural machin translat . arxiv preprint arxiv:1508.04025 , 2015 . 
+
+ [ 25 ] mitchel p marcu , mari ann marcinkiewicz , beatric santorini . build larg annot 
+ corpu english : penn treebank . comput linguist , 19(2):313–330 , 1993 . 
+ [ 26 ] david mccloski , eugen charniak , mark johnson . effect self - train pars . 
+ proceed human languag technolog confer naacl , main confer , 
+ page 152–159 . acl , june 2006 . 
+ [ 27 ] ankur parikh , oscar täckström , dipanjan da , jakob uszkoreit . decompos attent 
+ model . empir method natur languag process , 2016 . 
+ [ 28 ] romain paulu , caim xiong , richard socher . deep reinforc model abstract 
+ summar . arxiv preprint arxiv:1705.04304 , 2017 . 
+ [ 29 ] slav petrov , leon barrett , romain thibaux , dan klein . learn accur , compact , 
+ interpret tree annot . proceed 21st intern confer 
+ comput linguist 44th annual meet acl , page 433–440 . acl , juli 
+ 2006 . 
+ [ 30 ] ofir press lior wolf . output embed improv languag model . arxiv 
+ preprint arxiv:1608.05859 , 2016 . 
+ [ 31 ] rico sennrich , barri haddow , alexandra birch . neural machin translat rare word 
+ subword unit . arxiv preprint arxiv:1508.07909 , 2015 . 
+ [ 32 ] noam shazeer , azalia mirhoseini , krzysztof maziarz , andi davi , quoc le , geoffrey hinton , 
+ jeff dean . outrag larg neural network : spars - gate mixtur - - expert 
+ layer . arxiv preprint arxiv:1701.06538 , 2017 . 
+ [ 33 ] nitish srivastava , geoffrey e hinton , alex krizhevski , ilya sutskev , ruslan salakhutdinov . dropout : simpl way prevent neural network overfit . journal machin 
+ learn research , 15(1):1929–1958 , 2014 . 
+ [ 34 ] sainbayar sukhbaatar , arthur szlam , jason weston , rob fergu . end - - end memori 
+ network . c. cort , n. d. lawrenc , d. d. lee , m. sugiyama , r. garnett , editor , 
+ advanc neural inform process system 28 , page 2440–2448 . curran associ , 
+ inc. , 2015 . 
+ [ 35 ] ilya sutskev , oriol vinyal , quoc vv le . sequenc sequenc learn neural 
+ network . advanc neural inform process system , page 3104–3112 , 2014 . 
+ [ 36 ] christian szegedi , vincent vanhouck , sergey ioff , jonathon shlen , zbigniew wojna . 
+ rethink incept architectur comput vision . corr , abs/1512.00567 , 2015 . 
+ [ 37 ] vinyal & kaiser , koo , petrov , sutskev , hinton . grammar foreign languag . 
+ advanc neural inform process system , 2015 . 
+ [ 38 ] yonghui wu , mike schuster , zhifeng chen , quoc v le , mohammad norouzi , wolfgang 
+ macherey , maxim krikun , yuan cao , qin gao , klau macherey , et al . googl neural machin 
+ translat system : bridg gap human machin translat . arxiv preprint 
+ arxiv:1609.08144 , 2016 . 
+ [ 39 ] jie zhou , ying cao , xuguang wang , peng li , wei xu . deep recurr model 
+ fast - forward connect neural machin translat . corr , abs/1606.04199 , 2016 . 
+ [ 40 ] muhua zhu , yue zhang , wenliang chen , min zhang , jingbo zhu . fast accur 
+ shift - reduc constitu pars . proceed 51st annual meet acl ( v olum 
+ 1 : long paper ) , page 434–443 . acl , august 2013 . 
+
+ attent visual 
+ input - input layer5 
+ 
+ 
+ 
+ 
+ spirit 
+ 
+ 
+ major 
+ 
+ american 
+ govern 
+ 
+ pass 
+ new 
+ law 
+ 
+ make 
+ 
+ registr 
+ 
+ vote 
+ process 
+ 
+ difficult 
+ . 
+ < eo > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ 
+ 
+ 
+ 
+ spirit 
+ 
+ 
+ major 
+ 
+ american 
+ govern 
+ 
+ pass 
+ new 
+ law 
+ 
+ make 
+ 
+ registr 
+ 
+ vote 
+ process 
+ 
+ difficult 
+ . 
+ < eo > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ figur 3 : exampl attent mechan follow long - distanc depend 
+ encod self - attent layer 5 6 . attent head attend distant depend 
+ verb ‘ make ’ , complet phrase ‘ make ... difficult ’ . attent shown 
+ word ‘ make ’ . differ color repres differ head . best view color . 
+
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ figur 4 : attent head , layer 5 6 , appar involv anaphora resolut . : 
+ attent head 5 . : isol attent word ‘ ’ attent head 5 
+ 6 . note attent sharp word . 
+
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ applic 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eo > 
+ < pad > 
+ figur 5 : attent head exhibit behaviour relat structur 
+ sentenc . exampl , differ head encod self - attent 
+ layer 5 6 . head clearli learn perform differ task .

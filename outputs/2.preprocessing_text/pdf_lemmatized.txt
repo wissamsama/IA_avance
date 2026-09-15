@@ -1,0 +1,822 @@
+provide proper attribution provide , google grant permission 
+ reproduce table figure paper solely use journalistic 
+ scholarly work . 
+ attention need 
+ ashish vaswani∗ 
+ google brain 
+ avaswani@google.com 
+ noam shazeer∗ 
+ google brain 
+ noam@google.com 
+ niki parmar∗ 
+ google research 
+ nikip@google.com 
+ jakob uszkoreit∗ 
+ google research 
+ usz@google.com 
+ llion jones∗ 
+ google research 
+ llion@google.com 
+ aidan n. gomez∗† 
+ university toronto 
+ aidan@cs.toronto.edu 
+ łukasz kaiser∗ 
+ google brain 
+ lukaszkaiser@google.com 
+ illia polosukhin∗‡ 
+ illia.polosukhin@gmail.com 
+ abstract 
+ dominant sequence transduction model base complex recurrent 
+ convolutional neural network include encoder decoder . good 
+ perform model connect encoder decoder attention 
+ mechanism . propose new simple network architecture , transformer , 
+ base solely attention mechanism , dispense recurrence convolution 
+ entirely . experiment machine translation task model 
+ superior quality parallelizable require significantly 
+ time train . model achieve 28.4 bleu wmt 2014 englishto - german translation task , improve exist good result , include 
+ ensemble , 2 bleu . wmt 2014 english - - french translation task , 
+ model establish new single - model state - - - art bleu score 41.8 
+ training 3.5 day gpu , small fraction training cost 
+ good model literature . transformer generalize 
+ task apply successfully english constituency parse 
+ large limited training datum . 
+ ∗equal contribution . list order random . jakob propose replace rnn self - attention start 
+ effort evaluate idea . ashish , illia , design implement transformer model 
+ crucially involve aspect work . noam propose scale dot - product attention , multi - head 
+ attention parameter - free position representation person involve nearly 
+ detail . niki design , implement , tune evaluate countless model variant original codebase 
+ tensor2tensor . llion experiment novel model variant , responsible initial codebase , 
+ efficient inference visualization . lukasz aidan spend countless long day design part 
+ implement tensor2tensor , replace early codebase , greatly improve result massively accelerate 
+ research . 
+ †work perform google brain . 
+ ‡work perform google research . 
+ 31st conference neural information processing systems ( nips 2017 ) , long beach , , usa . 
+ arxiv:1706.03762v7 [ cs . cl ] 2 aug 2023 
+
+ 1 introduction 
+ recurrent neural network , long short - term memory [ 13 ] gate recurrent [ 7 ] neural network 
+ particular , firmly establish state art approach sequence modeling 
+ transduction problem language modeling machine translation [ 35 , 2 , 5 ] . numerous 
+ effort continue push boundary recurrent language model encoder - decoder 
+ architecture [ 38 , 24 , 15 ] . 
+ recurrent model typically factor computation symbol position input output 
+ sequence . align position step computation time , generate sequence hidden 
+ statesht , function previous hidden stateht−1 input positiont . inherently 
+ sequential nature preclude parallelization training example , critical long 
+ sequence length , memory constraint limit batch example . recent work achieve 
+ significant improvement computational efficiency factorization trick [ 21 ] conditional 
+ computation [ 32 ] , improve model performance case . fundamental 
+ constraint sequential computation , , remain . 
+ attention mechanism integral compelling sequence modeling transduction model task , allow modeling dependency regard distance 
+ input output sequence [ 2 , 19 ] . case [ 27 ] , , attention mechanism 
+ conjunction recurrent network . 
+ work propose transformer , model architecture eschew recurrence instead 
+ rely entirely attention mechanism draw global dependency input output . 
+ transformer allow significantly parallelization reach new state art 
+ translation quality train little hour p100 gpus . 
+ 2 background 
+ goal reduce sequential computation form foundation extended neural gpu 
+ [ 16 ] , bytenet [ 18 ] convs2s [ 9 ] , use convolutional neural network basic building 
+ block , compute hide representation parallel input output position . model , 
+ number operation require relate signal arbitrary input output position grow 
+ distance position , linearly convs2s logarithmically bytenet . make 
+ difficult learn dependency distant position [ 12 ] . transformer 
+ reduce constant number operation , albeit cost reduce effective resolution 
+ average attention - weighted position , effect counteract multi - head attention 
+ describe section 3.2 . 
+ self - attention , call intra - attention attention mechanism relate different position 
+ single sequence order compute representation sequence . self - attention 
+ successfully variety task include read comprehension , abstractive summarization , 
+ textual entailment learn task - independent sentence representation [ 4 , 27 , 28 , 22 ] . 
+ end - - end memory network base recurrent attention mechanism instead sequencealigned recurrence show perform simple - language question answer 
+ language modeling task [ 34 ] . 
+ good knowledge , , transformer transduction model rely 
+ entirely self - attention compute representation input output sequencealigne rnn convolution . follow section , describe transformer , motivate 
+ self - attention discuss advantage model [ 17 , 18 ] [ 9 ] . 
+ 3 model architecture 
+ competitive neural sequence transduction model encoder - decoder structure [ 5 , 2 , 35 ] . 
+ , encoder map input sequence symbol representation ( x1, ... ,x n ) sequence 
+ continuous representation z = ( z1, ... ,z n ) . give z , decoder generate output 
+ sequence ( y1, ... ,y m ) symbol element time . step model auto - regressive 
+ [ 10 ] , consume previously generate symbol additional input generate . 
+
+ figure 1 : transformer - model architecture . 
+ transformer follow overall architecture stack self - attention point - wise , fully 
+ connected layer encoder decoder , show left right half figure 1 , 
+ respectively . 
+ 3.1 encoder decoder stacks 
+ encoder : encoder compose stack n = 6 identical layer . layer 
+ sub - layer . multi - head self - attention mechanism , second simple , positionwise fully connect feed - forward network . employ residual connection [ 11 ] 
+ sub - layer , follow layer normalization [ 1 ] . , output sub - layer 
+ layernorm(x + sublayer(x ) ) , sublayer(x ) function implement sub - layer 
+ . facilitate residual connection , sub - layer model , embed 
+ layer , produce output dimensiondmodel = 512 . 
+ decoder : decoder compose stack ofn = 6 identical layer . addition 
+ sub - layer encoder layer , decoder insert sub - layer , perform multi - head 
+ attention output encoder stack . similar encoder , employ residual connection 
+ sub - layer , follow layer normalization . modify self - attention 
+ sub - layer decoder stack prevent position attend subsequent position . 
+ masking , combine fact output embedding offset position , ensure 
+ prediction positioni depend know output position thani . 
+ 3.2 attention 
+ attention function describe map query set key - value pair output , 
+ query , key , value , output vector . output compute weighted sum 
+
+ scaled dot - product attention 
+ multi - head attention 
+ figure 2 : ( left ) scaled dot - product attention . ( right ) multi - head attention consist 
+ attention layer run parallel . 
+ value , weight assign value compute compatibility function 
+ query correspond key . 
+ 3.2.1 scaled dot - product attention 
+ particular attention " scaled dot - product attention " ( figure 2 ) . input consist 
+ query key dimensiondk , value dimensiondv . compute dot product 
+ query key , divide by√dk , apply softmax function obtain weight 
+ value . 
+ practice , compute attention function set query simultaneously , pack 
+ matrixq. key value pack matricesk andv . compute 
+ matrix output : 
+ attention(q , k , v ) = softmax(qk t 
+ √dk 
+ ) v ( 1 ) 
+ commonly attention function additive attention [ 2 ] , dot - product ( multiplicative ) attention . dot - product attention identical algorithm , scaling factor 
+ 1√dk 
+ . additive attention compute compatibility function feed - forward network 
+ single hide layer . similar theoretical complexity , dot - product attention 
+ fast space - efficient practice , implement highly optimize 
+ matrix multiplication code . 
+ small value ofdk mechanism perform similarly , additive attention outperform 
+ dot product attention scale large value ofdk [ 3 ] . suspect large value 
+ dk , dot product grow large magnitude , push softmax function region 
+ extremely small gradient 4 . counteract effect , scale dot product 1√dk 
+ . 
+ 3.2.2 multi - head attention 
+ instead perform single attention function withdmodel - dimensional key , value query , 
+ find beneficial linearly project query , key valuesh time different , learn 
+ linear projection todk , dk anddv dimension , respectively . project version 
+ query , key value perform attention function parallel , yieldingdv - dimensional 
+ 4to illustrate dot product large , assume component q k independent random 
+ variable mean 0 variance 1 . dot product , q · k = pdk 
+ i=1 qiki , mean 0 variance dk . 
+
+ output value . concatenate project , result final value , 
+ depict figure 2 . 
+ multi - head attention allow model jointly attend information different representation 
+ subspace different position . single attention head , average inhibit . 
+ multihead(q , k , v ) = concat(head 1 , ... , headh)w o 
+ headi = attention(qw q 
+ , kw k 
+ , vw v 
+ ) 
+ projection parameter matricesw q 
+ ∈ rdmodel×dk , w k 
+ ∈ rdmodel×dk , w v 
+ ∈ rdmodel×dv 
+ andw o∈ rhdv×dmodel . 
+ work employ h = 8 parallel attention layer , head . use 
+ dk = dv = dmodel / h = 64 . reduce dimension head , total computational cost 
+ similar single - head attention dimensionality . 
+ 3.2.3 applications attention model 
+ transformer use multi - head attention different way : 
+ • " encoder - decoder attention " layer , query come previous decoder layer , 
+ memory key value come output encoder . allow 
+ position decoder attend position input sequence . mimic 
+ typical encoder - decoder attention mechanism sequence - - sequence model 
+ [ 38 , 2 , 9 ] . 
+ • encoder contain self - attention layer . self - attention layer key , value 
+ query come place , case , output previous layer 
+ encoder . position encoder attend position previous layer 
+ encoder . 
+ • similarly , self - attention layer decoder allow position decoder attend 
+ position decoder include position . need prevent leftward 
+ information flow decoder preserve auto - regressive property . implement 
+ inside scale dot - product attention mask ( set to−∞ ) value input 
+ softmax correspond illegal connection . figure 2 . 
+ 3.3 position - wise feed - forward networks 
+ addition attention sub - layer , layer encoder decoder contain fully 
+ connected feed - forward network , apply position separately identically . 
+ consist linear transformation relu activation . 
+ ffn(x ) = max(0,xw 1 + b1)w2 + b2 ( 2 ) 
+ linear transformation different position , use different parameter 
+ layer layer . way describe convolution kernel size 1 . 
+ dimensionality input output dmodel = 512 , inner - layer dimensionality 
+ df f = 2048 . 
+ 3.4 embeddings softmax 
+ similarly sequence transduction model , use learn embedding convert input 
+ token output token vector dimensiondmodel . use usual learn linear transformation softmax function convert decoder output predict - token probability . 
+ model , share weight matrix embed layer pre - softmax 
+ linear transformation , similar [ 30 ] . embed layer , multiply weight by√dmodel . 
+
+ table 1 : maximum path length , - layer complexity minimum number sequential operation 
+ different layer types.n sequence length , d representation dimension , k kernel 
+ size convolution andr size neighborhood restrict self - attention . 
+ layer type complexity layer sequential maximum path length 
+ operations 
+ self - attention o(n2·d ) o(1 ) o(1 ) 
+ recurrent o(n·d2 ) o(n ) o(n ) 
+ convolutional o(k·n·d2 ) o(1 ) o(logk(n ) ) 
+ self - attention ( restrict ) o(r·n·d ) o(1 ) o(n / r ) 
+ 3.5 positional encoding 
+ model contain recurrence convolution , order model use 
+ order sequence , inject information relative absolute position 
+ token sequence . end , add " positional encoding " input embedding 
+ bottom encoder decoder stack . positional encoding dimensiondmodel 
+ embedding , sum . choice positional encoding , 
+ learn fix [ 9 ] . 
+ work , use sine cosine function different frequency : 
+ pe ( pos,2i ) = sin(pos/100002i / dmodel ) 
+ pe ( pos,2i+1 ) = cos(pos/100002i / dmodel ) 
+ wherepos position andi dimension . , dimension positional encoding 
+ correspond sinusoid . wavelength form geometric progression 2π 10000 · 2π . 
+ choose function hypothesize allow model easily learn attend 
+ relative position , fix offsetk , pe pos+k represent linear function 
+ pe pos . 
+ experiment learn positional embedding [ 9 ] instead , find 
+ version produce nearly identical result ( table 3 row ( e ) ) . choose sinusoidal version 
+ allow model extrapolate sequence length long one encounter 
+ training . 
+ 4 self - attention 
+ section compare aspect self - attention layer recurrent convolutional layer commonly map variable - length sequence symbol representation 
+ ( x1, ... ,x n ) sequence equal length ( z1, ... ,z n ) , xi , z i∈ rd , hidden 
+ layer typical sequence transduction encoder decoder . motivate use self - attention 
+ consider desiderata . 
+ total computational complexity layer . computation 
+ parallelize , measure minimum number sequential operation require . 
+ path length long - range dependency network . learn long - range 
+ dependency key challenge sequence transduction task . key factor affect 
+ ability learn dependency length path forward backward signal 
+ traverse network . short path combination position input 
+ output sequence , easy learn long - range dependency [ 12 ] . compare 
+ maximum path length input output position network compose 
+ different layer type . 
+ note table 1 , self - attention layer connect position constant number sequentially 
+ execute operation , recurrent layer require o(n ) sequential operation . term 
+ computational complexity , self - attention layer fast recurrent layer sequence 
+
+ length n small representation dimensionality d , case 
+ sentence representation state - - - art model machine translation , word - piece 
+ [ 38 ] byte - pair [ 31 ] representation . improve computational performance task involve 
+ long sequence , self - attention restrict consider neighborhood sizer 
+ input sequence center respective output position . increase maximum 
+ path length too(n / r ) . plan investigate approach future work . 
+ single convolutional layer kernel widthk < n connect pair input output 
+ position . require stack ofo(n / k ) convolutional layer case contiguous kernel , 
+ oro(logk(n ) ) case dilated convolution [ 18 ] , increase length long path 
+ position network . convolutional layer generally expensive 
+ recurrent layer , factor k. separable convolution [ 6 ] , , decrease complexity 
+ considerably , too(k·n·d + n·d2 ) . k = n , , complexity separable 
+ convolution equal combination self - attention layer point - wise feed - forward layer , 
+ approach model . 
+ benefit , self - attention yield interpretable model . inspect attention distribution 
+ model present discuss example appendix . individual attention 
+ head clearly learn perform different task , appear exhibit behavior relate syntactic 
+ semantic structure sentence . 
+ 5 training 
+ section describe training regime model . 
+ 5.1 training data batching 
+ train standard wmt 2014 english - german dataset consist 4.5 million 
+ sentence pair . sentence encode byte - pair encoding [ 3 ] , share sourcetarget vocabulary 37000 token . english - french , significantly large wmt 
+ 2014 english - french dataset consist 36 m sentence split token 32000 word - piece 
+ vocabulary [ 38 ] . sentence pair batch approximate sequence length . training 
+ batch contain set sentence pair contain approximately 25000 source token 25000 
+ target token . 
+ 5.2 hardware schedule 
+ train model machine 8 nvidia p100 gpu . base model 
+ hyperparameter describe paper , training step take 0.4 second . 
+ train base model total 100,000 step 12 hour . big models,(describe 
+ line table 3 ) , step time 1.0 second . big model train 300,000 step 
+ ( 3.5 day ) . 
+ 5.3 optimizer 
+ adam optimizer [ 20 ] withβ1 = 0.9,β2 = 0.98 andϵ = 10−9 . vary learning 
+ rate course training , accord formula : 
+ lrate = d−0.5 
+ model · min(step_num−0.5,step _ num·warmup_steps−1.5 ) ( 3 ) 
+ correspond increase learn rate linearly firstwarmup_steps training step , 
+ decrease proportionally inverse square root step number . 
+ warmup_steps = 4000 . 
+ 5.4 regularization 
+ employ type regularization training : 
+
+ table 2 : transformer achieve well bleu score previous state - - - art model 
+ english - - german english - - french newstest2014 test fraction training cost . 
+ model 
+ bleu training cost ( flop ) 
+ en - de en - fr en - de en - fr 
+ bytenet [ 18 ] 23.75 
+ deep - att + posunk [ 39 ] 39.2 1.0 · 1020 
+ gnmt + rl [ 38 ] 24.6 39.92 2.3 · 1019 1.4 · 1020 
+ convs2s [ 9 ] 25.16 40.46 9.6 · 1018 1.5 · 1020 
+ moe [ 32 ] 26.03 40.56 2.0 · 1019 1.2 · 1020 
+ deep - att + posunk ensemble [ 39 ] 40.4 8.0 · 1020 
+ gnmt + rl ensemble [ 38 ] 26.30 41.16 1.8 · 1020 1.1 · 1021 
+ convs2s ensemble [ 9 ] 26.36 41.29 7.7 · 1019 1.2 · 1021 
+ transformer ( base model ) 27.3 38.1 3.3 · 1018 
+ transformer ( big ) 28.4 41.8 2.3 · 1019 
+ residual dropout apply dropout [ 33 ] output sub - layer , add 
+ sub - layer input normalize . addition , apply dropout sum embedding 
+ positional encoding encoder decoder stack . base model , use rate 
+ pdrop = 0.1 . 
+ label smooth training , employ label smoothing value ϵls = 0.1 [ 36 ] . 
+ hurt perplexity , model learn unsure , improve accuracy bleu score . 
+ 6 result 
+ 6.1 machine translation 
+ wmt 2014 english - - german translation task , big transformer model ( transformer ( big ) 
+ table 2 ) outperform good previously report model ( include ensemble ) 2.0 
+ bleu , establish new state - - - art bleu score 28.4 . configuration model 
+ list line table 3 . training take 3.5 day 8 p100 gpu . base model 
+ surpasse previously publish model ensemble , fraction training cost 
+ competitive model . 
+ wmt 2014 english - - french translation task , big model achieve bleu score 41.0 , 
+ outperform previously publish single model , 1/4 training cost 
+ previous state - - - art model . transformer ( big ) model train english - - french 
+ dropout ratepdrop = 0.1 , instead 0.3 . 
+ base model , single model obtain average 5 checkpoint , 
+ write 10 - minute interval . big model , average 20 checkpoint . 
+ beam search beam size 4 length penaltyα = 0.6 [ 38 ] . hyperparameter 
+ choose experimentation development set . set maximum output length 
+ inference input length + 50 , terminate early possible [ 38 ] . 
+ table 2 summarize result compare translation quality training cost model 
+ architecture literature . estimate number float point operation train 
+ model multiply training time , number gpu , estimate sustained 
+ single - precision float - point capacity gpu 5 . 
+ 6.2 model variations 
+ evaluate importance different component transformer , vary base model 
+ different way , measure change performance english - - german translation 
+ 5we value 2.8 , 3.7 , 6.0 9.5 tflop k80 , k40 , m40 p100 , respectively . 
+
+ table 3 : variation transformer architecture . unlisted value identical base 
+ model . metric english - - german translation development set , newstest2013 . list 
+ perplexity - wordpiece , accord byte - pair encoding , compare 
+ - word perplexity . 
+ n d model dff h d k dv pdrop ϵls 
+ train ppl bleu param 
+ step ( dev ) ( dev ) ×106 
+ base 6 512 2048 8 64 64 0.1 0.1 100 k 4.92 25.8 65 
+ ( ) 
+ 1 512 512 5.29 24.9 
+ 4 128 128 5.00 25.5 
+ 16 32 32 4.91 25.8 
+ 32 16 16 5.01 25.4 
+ ( b ) 16 5.16 25.1 58 
+ 32 5.01 25.4 60 
+ ( c ) 
+ 2 6.11 23.7 36 
+ 4 5.19 25.3 50 
+ 8 4.88 25.5 80 
+ 256 32 32 5.75 24.5 28 
+ 1024 128 128 4.66 26.0 168 
+ 1024 5.12 25.4 53 
+ 4096 4.75 26.2 90 
+ ( d ) 
+ 0.0 5.77 24.6 
+ 0.2 4.95 25.5 
+ 0.0 4.67 25.3 
+ 0.2 5.47 25.7 
+ ( e ) positional embed instead sinusoid 4.92 25.7 
+ big 6 1024 4096 16 0.3 300 k 4.33 26.4 213 
+ development set , newstest2013 . beam search describe previous section , 
+ checkpoint averaging . present result table 3 . 
+ table 3 row ( ) , vary number attention head attention key value dimension , 
+ keep computation constant , describe section 3.2.2 . single - head 
+ attention 0.9 bleu bad good setting , quality drop head . 
+ table 3 row ( b ) , observe reduce attention key size dk hurt model quality . 
+ suggest determine compatibility easy sophisticated compatibility 
+ function dot product beneficial . observe row ( c ) ( d ) , expect , 
+ big model well , dropout helpful avoid - fitting . row ( e ) replace 
+ sinusoidal positional encoding learn positional embedding [ 9 ] , observe nearly identical 
+ result base model . 
+ 6.3 english constituency parse 
+ evaluate transformer generalize task perform experiment english 
+ constituency parse . task present specific challenge : output subject strong structural 
+ constraint significantly long input . furthermore , rnn sequence - - sequence 
+ model able attain state - - - art result small - data regime [ 37 ] . 
+ train 4 - layer transformer withdmodel = 1024 wall street journal ( wsj ) portion 
+ penn treebank [ 25 ] , 40 k training sentence . train semi - supervised setting , 
+ large high - confidence berkleyparser corpora approximately 17 m sentence 
+ [ 37 ] . vocabulary 16 k token wsj set vocabulary 32 k token 
+ semi - supervised setting . 
+ perform small number experiment select dropout , attention residual 
+ ( section 5.4 ) , learn rate beam size section 22 development set , parameter 
+ remain unchanged english - - german base translation model . inference , 
+
+ table 4 : transformer generalize english constituency parse ( result section 23 
+ wsj ) 
+ parser training wsj 23 f1 
+ vinyals & kaiser el al . ( 2014 ) [ 37 ] wsj , discriminative 88.3 
+ petrov et al . ( 2006 ) [ 29 ] wsj , discriminative 90.4 
+ zhu et al . ( 2013 ) [ 40 ] wsj , discriminative 90.4 
+ dyer et al . ( 2016 ) [ 8 ] wsj , discriminative 91.7 
+ transformer ( 4 layer ) wsj , discriminative 91.3 
+ zhu et al . ( 2013 ) [ 40 ] semi - supervised 91.3 
+ huang & harper ( 2009 ) [ 14 ] semi - supervised 91.3 
+ mcclosky et al . ( 2006 ) [ 26 ] semi - supervised 92.1 
+ vinyals & kaiser el al . ( 2014 ) [ 37 ] semi - supervised 92.1 
+ transformer ( 4 layer ) semi - supervised 92.7 
+ luong et al . ( 2015 ) [ 23 ] multi - task 93.0 
+ dyer et al . ( 2016 ) [ 8 ] generative 93.3 
+ increase maximum output length input length + 300 . beam size 21 andα = 0.3 
+ wsj semi - supervised setting . 
+ result table 4 despite lack task - specific tuning model perform surprisingly , yield well result previously report model exception 
+ recurrent neural network grammar [ 8 ] . 
+ contrast rnn sequence - - sequence model [ 37 ] , transformer outperform berkeley- 
+ parser [ 29 ] train wsj training set 40 k sentence . 
+ 7 conclusion 
+ work , present transformer , sequence transduction model base entirely 
+ attention , replace recurrent layer commonly encoder - decoder architecture 
+ multi - headed self - attention . 
+ translation task , transformer train significantly fast architecture base 
+ recurrent convolutional layer . wmt 2014 english - - german wmt 2014 
+ english - - french translation task , achieve new state art . task good 
+ model outperform previously report ensemble . 
+ excited future attention - base model plan apply task . 
+ plan extend transformer problem involve input output modality text 
+ investigate local , restrict attention mechanism efficiently handle large input output 
+ image , audio video . make generation sequential research goal . 
+ code train evaluate model available https://github.com/ 
+ tensorflow / tensor2tensor . 
+ acknowledgement grateful nal kalchbrenner stephan gouws fruitful 
+ comment , correction inspiration . 
+ reference 
+ [ 1 ] jimmy lei ba , jamie ryan kiros , geoffrey e hinton . layer normalization . arxiv preprint 
+ arxiv:1607.06450 , 2016 . 
+ [ 2 ] dzmitry bahdanau , kyunghyun cho , yoshua bengio . neural machine translation jointly 
+ learn align translate . corr , abs/1409.0473 , 2014 . 
+ [ 3 ] denny britz , anna goldie , minh - thang luong , quoc v . le . massive exploration neural 
+ machine translation architecture . corr , abs/1703.03906 , 2017 . 
+ [ 4 ] jianpeng cheng , li dong , mirella lapata . long short - term memory - network machine 
+ reading . arxiv preprint arxiv:1601.06733 , 2016 . 
+
+ [ 5 ] kyunghyun cho , bart van merrienboer , caglar gulcehre , fethi bougares , holger schwenk , 
+ yoshua bengio . learn phrase representation rnn encoder - decoder statistical 
+ machine translation . corr , abs/1406.1078 , 2014 . 
+ [ 6 ] francois chollet . xception : deep learn depthwise separable convolution . arxiv 
+ preprint arxiv:1610.02357 , 2016 . 
+ [ 7 ] junyoung chung , çaglar gülçehre , kyunghyun cho , yoshua bengio . empirical evaluation 
+ gate recurrent neural network sequence modeling . corr , abs/1412.3555 , 2014 . 
+ [ 8 ] chris dyer , adhiguna kuncoro , miguel ballesteros , noah a. smith . recurrent neural 
+ network grammar . proc . naacl , 2016 . 
+ [ 9 ] jonas gehring , michael auli , david grangier , denis yarats , yann n. dauphin . convolutional sequence sequence learning . arxiv preprint arxiv:1705.03122v2 , 2017 . 
+ [ 10 ] alex graves . generating sequence recurrent neural network . arxiv preprint 
+ arxiv:1308.0850 , 2013 . 
+ [ 11 ] kaime , xiangyu zhang , shaoqing ren , jian sun . deep residual learning image recognition . proceedings ieee conference computer vision pattern 
+ recognition , page 770–778 , 2016 . 
+ [ 12 ] sepp hochreiter , yoshua bengio , paolo frasconi , jürgen schmidhuber . gradient flow 
+ recurrent net : difficulty learn long - term dependency , 2001 . 
+ [ 13 ] sepp hochreiter jürgen schmidhuber . long short - term memory . neural computation , 
+ 9(8):1735–1780 , 1997 . 
+ [ 14 ] zhongqiang huang mary harper . self - training pcfg grammar latent annotation 
+ language . proceedings 2009 conference empirical methods natural 
+ language processing , page 832–841 . acl , august 2009 . 
+ [ 15 ] rafal jozefowicz , oriol vinyals , mike schuster , noam shazeer , yonghui wu . explore 
+ limit language modeling . arxiv preprint arxiv:1602.02410 , 2016 . 
+ [ 16 ] łukasz kaiser samy bengio . active memory replace attention ? advances neural 
+ information processing systems , ( nips ) , 2016 . 
+ [ 17 ] łukasz kaiser ilya sutskever . neural gpu learn algorithm . international conference 
+ learning representations ( iclr ) , 2016 . 
+ [ 18 ] nal kalchbrenner , lasse espeholt , karen simonyan , aaron van den oord , alex graves , koray kavukcuoglu . neural machine translation linear time.arxiv preprint arxiv:1610.10099v2 , 
+ 2017 . 
+ [ 19 ] yoon kim , carl denton , luong hoang , alexander m. rush . structured attention network . 
+ international conference learning representations , 2017 . 
+ [ 20 ] diederik kingma jimmy ba . adam : method stochastic optimization . iclr , 2015 . 
+ [ 21 ] oleksii kuchaiev boris ginsburg . factorization trick lstm network . arxiv preprint 
+ arxiv:1703.10722 , 2017 . 
+ [ 22 ] zhouhan lin , minwei feng , cicero nogueira do santos , mo yu , bing xiang , bowen 
+ zhou , yoshua bengio . structured self - attentive sentence embed . arxiv preprint 
+ arxiv:1703.03130 , 2017 . 
+ [ 23 ] minh - thang luong , quoc v . le , ilya sutskever , oriol vinyals , lukasz kaiser . multi - task 
+ sequence sequence learning . arxiv preprint arxiv:1511.06114 , 2015 . 
+ [ 24 ] minh - thang luong , hieu pham , christopher d manning . effective approach attentionbase neural machine translation . arxiv preprint arxiv:1508.04025 , 2015 . 
+
+ [ 25 ] mitchell p marcus , mary ann marcinkiewicz , beatrice santorini . build large annotated 
+ corpus english : penn treebank . computational linguistic , 19(2):313–330 , 1993 . 
+ [ 26 ] david mcclosky , eugene charniak , mark johnson . effective self - training parse . 
+ proceedings human language technology conference naacl , main conference , 
+ page 152–159 . acl , june 2006 . 
+ [ 27 ] ankur parikh , oscar täckström , dipanjan das , jakob uszkoreit . decomposable attention 
+ model . empirical methods natural language processing , 2016 . 
+ [ 28 ] romain paulus , caiming xiong , richard socher . deep reinforce model abstractive 
+ summarization . arxiv preprint arxiv:1705.04304 , 2017 . 
+ [ 29 ] slav petrov , leon barrett , romain thibaux , dan klein . learn accurate , compact , 
+ interpretable tree annotation . proceedings 21st international conference 
+ computational linguistics 44th annual meeting acl , page 433–440 . acl , july 
+ 2006 . 
+ [ 30 ] ofir press lior wolf . output embed improve language model . arxiv 
+ preprint arxiv:1608.05859 , 2016 . 
+ [ 31 ] rico sennrich , barry haddow , alexandra birch . neural machine translation rare word 
+ subword unit . arxiv preprint arxiv:1508.07909 , 2015 . 
+ [ 32 ] noam shazeer , azalia mirhoseini , krzysztof maziarz , andy davis , quoc le , geoffrey hinton , 
+ jeff dean . outrageously large neural network : sparsely - gate mixture - - expert 
+ layer . arxiv preprint arxiv:1701.06538 , 2017 . 
+ [ 33 ] nitish srivastava , geoffrey e hinton , alex krizhevsky , ilya sutskever , ruslan salakhutdinov . dropout : simple way prevent neural network overfitte . journal machine 
+ learning research , 15(1):1929–1958 , 2014 . 
+ [ 34 ] sainbayar sukhbaatar , arthur szlam , jason weston , rob fergus . end - - end memory 
+ network . c. cortes , n. d. lawrence , d. d. lee , m. sugiyama , r. garnett , editor , 
+ advance neural information processing systems 28 , page 2440–2448 . curran associates , 
+ inc. , 2015 . 
+ [ 35 ] ilya sutskever , oriol vinyals , quoc vv le . sequence sequence learn neural 
+ network . advances neural information processing systems , page 3104–3112 , 2014 . 
+ [ 36 ] christian szegedy , vincent vanhoucke , sergey ioffe , jonathon shlens , zbigniew wojna . 
+ rethink inception architecture computer vision . corr , abs/1512.00567 , 2015 . 
+ [ 37 ] vinyals & kaiser , koo , petrov , sutskever , hinton . grammar foreign language . 
+ advances neural information processing systems , 2015 . 
+ [ 38 ] yonghui wu , mike schuster , zhifeng chen , quoc v le , mohammad norouzi , wolfgang 
+ macherey , maxim krikun , yuan cao , qin gao , klaus macherey , et al . google neural machine 
+ translation system : bridge gap human machine translation . arxiv preprint 
+ arxiv:1609.08144 , 2016 . 
+ [ 39 ] jie zhou , ying cao , xuguang wang , peng li , wei xu . deep recurrent model 
+ fast - forward connection neural machine translation . corr , abs/1606.04199 , 2016 . 
+ [ 40 ] muhua zhu , yue zhang , wenliang chen , min zhang , jingbo zhu . fast accurate 
+ shift - reduce constituent parsing . proceedings 51st annual meeting acl ( v olume 
+ 1 : long papers ) , page 434–443 . acl , august 2013 . 
+
+ attention visualizations 
+ input - input layer5 
+ 
+ 
+ 
+ 
+ spirit 
+ 
+ 
+ majority 
+ 
+ american 
+ government 
+ 
+ pass 
+ new 
+ law 
+ 
+ make 
+ 
+ registration 
+ 
+ voting 
+ process 
+ 
+ difficult 
+ . 
+ < eos > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ 
+ 
+ 
+ 
+ spirit 
+ 
+ 
+ majority 
+ 
+ american 
+ government 
+ 
+ pass 
+ new 
+ law 
+ 
+ make 
+ 
+ registration 
+ 
+ voting 
+ process 
+ 
+ difficult 
+ . 
+ < eos > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ < pad > 
+ figure 3 : example attention mechanism follow long - distance dependency 
+ encoder self - attention layer 5 6 . attention head attend distant dependency 
+ verb ' make ' , complete phrase ' make ... difficult ' . attention show 
+ word ' make ' . different color represent different head . well view color . 
+
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ figure 4 : attention head , layer 5 6 , apparently involve anaphora resolution . : 
+ attention head 5 . : isolate attention word ' ' attention head 5 
+ 6 . note attention sharp word . 
+
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ input - input layer5 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ 
+ law 
+ 
+ 
+ 
+ perfect 
+ , 
+ 
+ 
+ application 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ miss 
+ , 
+ 
+ 
+ opinion 
+ . 
+ < eos > 
+ < pad > 
+ figure 5 : attention head exhibit behaviour relate structure 
+ sentence . example , different head encoder self - attention 
+ layer 5 6 . head clearly learn perform different task .
