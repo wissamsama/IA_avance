@@ -11,3 +11,7 @@ pandas
 scikit-learn
 matplotlib
 openpyxl
+langdetect
+tiktoken
+torch
+transformers

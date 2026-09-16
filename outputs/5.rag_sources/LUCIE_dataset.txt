@@ -1,0 +1,1593 @@
+THE LUCIE -7B LLM AND THE LUCIE TRAINING DATASET:
+OPEN RESOURCES FOR MULTILINGUAL LANGUAGE GENERATION
+Olivier Gouvert (1)*
+LINAGORA
+Toulouse, France
+ogouvert@linagora.com
+Julie Hunter (1)
+LINAGORA
+Toulouse, France
+jhunter@linagora.com
+Jérôme Louradour (1)
+LINAGORA
+Toulouse, France
+jlouradour@linagora.com
+Christophe Cerisara (2)
+LORIA
+Paris, France
+christophe.cerisara@loria.fr
+Evan Dufraisse (2)
+CEA List
+Palaiseau, France
+evan.dufraisse@cea.fr
+Yaya Sy (2)
+LORIA
+Paris, France
+yaya.sy@loria.fr
+Laura Rivière (3)
+LINAGORA
+Toulouse, France
+lriviere@linagora.com
+Jean-Pierre Lorré (4)
+LINAGORA
+Toulouse, France
+jplorre@linagora.com
+OpenLLM-France community
+contact@openllm-france.fr
+January 2025
+ABSTRACT
+We present both the Lucie Training Dataset and the Lucie-7B foundation model, open resources
+created by the OpenLLM-France community.2 The Lucie Training Dataset is a multilingual collection
+of textual corpora centered around French, and designed to offset the anglo-centric biases found
+in many datasets for large language model pretraining. Its French data is pulled not only from the
+traditional web data sources, but also from French cultural heritage documents, filling an important
+gap in modern datasets. Beyond French, which makes up the largest share of the data, we added
+documents to support several other European languages, including English, Spanish, German, and
+Italian. Apart from its value as a resource for French language and culture, an important feature
+of this dataset is that it prioritizes data rights by minimizing copyrighted material. In addition,
+building on the philosophy of past open projects, it is redistributed 3 in the form used for training
+and its processing is described on Hugging Face and GitHub. The Lucie-7B foundation model is
+trained on equal amounts of data in French and English—roughly 33% for each—in an effort to
+better represent cultural aspects of French-speaking communities. We also describe two instruction
+fine-tuned versions of Lucie-7B, Lucie-7B-Instruct-v1.1 and Lucie-7B-Instruct-human-data, which
+we release as demonstrations of the foundation model in use. These models achieve promising
+results compared to state-of-the-art models, demonstrating that an open approach prioritizing data
+rights can still deliver strong performance. We see these models as an initial step toward developing
+more performant, and aligned models in the near future. The Lucie-7B resources, like the dataset,
+are all open. Model weights for Lucie-7B and the Lucie instruct models, along with intermediate
+checkpoints for the former, are likewise published on Hugging Face, while model training and data
+∗(1) principal contributors (Olivier: model training at all stages, data preparation; Julie: oversight of data preparation and mixes,
+day-to-day management; Jérôme: tokenizer training, model training first phase and project technical lead); (2) contributors to model
+training; (3) principal contributor to instruction tuning; (4) team manager.
+2The OpenLLM France Community is a community of people interested in all aspects of the development of open language
+models and is organized mainly around the French section of a Discord server now called OpenLLM Europe.
+3A single dataset, accounting for 0.2% of the final dataset, could not be redistributed as explained in Section 3 but its content is
+described on Hugging Face.
+arXiv:2503.12294v1 [cs.CL] 15 Mar 2025
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+preparation code is freely available on GitHub. This makes Lucie-7B one of the first OSI compliant
+language models according to the new OSI definition.4
+Keywords Large Language Models, Multilingual Language Models, Open Data, Pretraining, Textual Dataset
+1 Introduction
+When we set out to create Lucie-7B, one of our principal goals was to offset the English-centered bias found in the
+training sets of most mainstream large language models (LLMs) such as Meta’s Llama models. Poor representation of a
+language can lead not only to reduced language modeling performance for that language, but what’s more, a model
+that has seen scant data from a certain language is likely to have received scant information about cultures associated
+with that language. When faced with a question about history, religion, social practices or even everyday activities like
+cooking, the model is more likely to provide an answer suited to the language on which it is predominantly trained,
+which can lead to unsatisfying results for members of other language communities. For these reasons, together with the
+fact that the Lucie team was based in France, we decided early on that Lucie-7B would see at least as much French data
+as English.
+A second priority was to ensure that our data collection practices were respectful of the rights of the data producers.
+This includes abiding by copyright and intellectual property restrictions as well as eliminating personally identifying
+information where possible. An immediate consequence of this choice was that we needed to be careful in using data
+collected from the web. Initially, our plans were to rely only on sources, such as Wikipedia, that are well known
+to provide clean, high-quality data. The reality of the situation, however, is that the vast majority of LLM training
+data comes from the web and this data provides a level of quantity and diversity that is hard to reach through other
+means. We ultimately decided to gently relax our prohibition of general web data, though limiting it remained a guiding
+principle throughout our data collection process.
+Finally, building on the open-source philosophy of LINAGORA, the founding partner of the OpenLLM France
+community, a third central motivation for our project was to further growing efforts to shed light on LLM development.
+In fact, the name “Lucie” is derived from the Latin word for “light,” reflecting our desire make every aspect of our
+process visible to the public. From the beginning, we committed to sharing all information about our training data,
+including publication of the training datasets where possible, model weights, evaluation results, and all code used for
+training and data preparation.
+What we did not set out to do was to create an all-purpose chat assistant in the style of ChatGPT. Not only is ChatGPT
+allegedly hundreds of times larger than Lucie, but it, like all of the best performing models nowadays, has undergone
+multiple phases of fine-tuning, including alignment through methods like Reinforcement Learning with Human
+Feedback (RLHF) or Direct Preference Optimization (DPO), with large amounts of high-quality data. Collecting the
+data needed for these methods was beyond our resources in terms of time and human labor for this particular project.
+In the context of a recently begun research grant that carries the same name as the OpenLLM-France community, 5
+however, we are working with a larger, dedicated group of partners to build aligned versions of Lucie-7B. The resources
+described in this paper are thus the first (major) steps in a larger research program. We go ahead and release them in the
+spirit of open-source collaboration so that those who wish can begin to use the resources for their own purposes.
+This paper describes in detail the Lucie Training Dataset and the Lucie-7B models, including the foundation model and
+the two associated instruction-tuned models released as demonstrations. The Lucie Training Dataset, most of which has
+been republished on Hugging Face,6 is a collection of texts from diverse sources in French, English, Spanish, German
+and Italian as well as various programming languages. The majority of its data comes from French; it is in fact one of
+the biggest collections of French text data that has been preprocessed for LLM training. We provide further details in
+Section 3. Lucie-7B, while proficient in all of the natural languages from the Lucie Training Dataset, is designed to
+be particularly competent at generating French and English: roughly one third of its training data is in English and
+another third is in French. It is presented in Section 4, where we describe tokenizer training as well as the three stages of
+pretraining carried out to create the final model. Model weights, including weights for regular intermediate checkpoints,
+are available on Hugging Face.7 Code for training and data preparation is openly accessible on GitHub.8 Finally, in
+4Open Source AI Definitionhttps://opensource.org/ai/open-source-ai-definition
+5We gratefully acknowledge support from the BPI funded project OpenLLM-France.
+6https://huggingface.co/datasets/OpenLLM-France/Lucie-Training-Dataset
+7https://huggingface.co/OpenLLM-France/Lucie-7B
+8https://github.com/OpenLLM-France/Lucie-Training
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Section 5, we present the two instruction models, Lucie-7B-Instruct-v1.1 and Lucie-7B-Instruct-human-data,9 providing
+information on the datasets used to train them and the final evaluations. We turn first, however, to a review of related
+efforts to push for open data and open LLM development.
+2 Related open initiatives
+The BigScience Workshop10 was the first large-scale open-source collaboration aiming at training open foundation
+models, producing the Bloom LLM family of models as well as openly distributing all associated resources, including
+the ROOTS training dataset (Laurençon et al., 2022), scripts and working technical reports (Le Scao et al., 2023).
+This initiative involved more than 1,000 researchers from 60 countries and 250 institutions. The Bloom models were
+trained on the A100 partition of the Jean Zay supercomputer.11 BigScience has been an inspiration for all following
+open-source LLM initiatives, including ours and those described below.
+EleutherAI12 was another early actor in the push towards open foundation models and LLM pretraining data. It is a
+non-profit institute focusing on large-scale artificial intelligence research that made model and data sharing a central
+priority through its Pythia suite of open models and its dataset, the Pile, which combined a variety of web-based
+sources and domain-specific datasets in English (Biderman et al., 2023). The Allen Institute for AI 13 is an active
+player in developing novel approaches for pretraining and has openly shared model weights and checkpoints for
+its OLMO models as well as training code (Groeneveld et al., 2024). They likewise share their pretraining dataset
+DOLMA (Soldaini et al., 2024) along with data and code for instruction tuning and evaluation14. Like the Pile, DOLMA
+is heavily English-focused.
+The CroissantLLM (Faysse et al., 2024) project is highly complementary to that of Lucie-7B in that CroissantLLM is
+focused on French and English, having seen equal amounts of data in these two languages. In addition to the weights of
+this 1.3 billion parameter model, training data is shared on Hugging Face and code is released on GitHub.
+The above initiatives have benefited from massive efforts to share general web-based data. The Common Crawl
+foundation15 regularly crawls the web to pick up new material, paying attention to respect opt-out choices from url
+holders. The OSCAR project (Suárez et al., 2019) shares its pipelines for classifying and cleaning Common Crawl
+dumps and freely shares the resulting datasets. C4 (Raffel et al., 2020) is another effort to clean Common Crawl data.
+RedPajama (Weber et al., 2024) is a collection of web-based data including C4, Common Crawl data that has been
+processed with the CCNet pipeline and tagged with CCNet labels (Wenzek et al., 2020), and a handful of specialized
+web-sources such as Arxiv, Wikipedia and StackExchange. RefinedWeb (Penedo et al., 2023) is the result of efforts
+to clean and filter web data for the Falcon LLM (Almazrouei et al., 2023). FineWeb is a curated web dataset filtered
+using a Bert-based embedder with a regression head, trained on Llama3-70B rating annotations, designed to identify
+high-quality web content (Penedo et al., 2024).
+Open projects need platforms for distributing their data and models. Hugging Face, 16 which began as an initiative of
+The BigScience Workshop, has become the worldwide reference place to store and distribute open LLM resources,
+including model weights, code and datasets, with its Hugging Face Hub. 17 All of our Lucie-related resources are also
+available on the Hub. Our training code is available through GitHub.
+The OpenLLM France initiative benefits from, and builds upon, the open source and open data efforts described
+above. Its goal is to develop LLM training datasets and models that cater to French-speakers and, more generally, to
+Europeans in order to reduce European dependence on American and Chinese actors and push a truly open approach to
+AI development. Our first project yielded the Claire French Dialogue Dataset (Hunter et al., 2023), an open dataset
+distributed through Hugging Face. It is a collection of dialogues in French taken either from transcripts of conversations
+or from theater plays. This was later followed by its English counterpart, the Claire English Dialogue Dataset. The
+Claire models are causal language models that result from continuing the training of Falcon (Almazrouei et al., 2023)
+9https://huggingface.co/OpenLLM-France/Lucie-7B-Instruct-v1.1 and https://huggingface.co/
+OpenLLM-France/Lucie-7B-Instruct-human-data
+10https://bigscience.huggingface.co/
+11The Jean ZAy cluster, based in France, is operated by GENCI and managed by the CNRS/IDRIS http://www.idris.fr/
+jean-zay/.
+12https://eleuther.ai/
+13https://allenai.org/
+14https://github.com/allenai/OLMo-Eval
+15https://commoncrawl.org/
+16https://huggingface.co
+17https://huggingface.co/docs/hub/index
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+and Mistral (Jiang et al., 2023) on the Claire French Dialogue Dataset with the aim of augmenting the representation of
+the French language and of French-speaking cultures in the resulting LLMs.
+3 The Lucie Training Dataset
+The Lucie Training Dataset is a curated collection of texts in English, French, German, Spanish and Italian culled from
+a variety of sources including: web data, video subtitles, academic papers, digital books, newspapers, and magazines. It
+also contains samples of diverse programming languages to boost the reasoning capacity of models trained on this data.
+The majority of the texts in the corpus are in French, in an effort to minimize anglo-centric cultural biases.
+In Section 3.1, we introduce each of the subcorpora included in the Lucie Training Dataset and indicate their source
+and license information. All newspapers, monographies, magazines and legislative documents, as well as most books,
+are in the public domain (which depends on the author’s date of death and the country of publication). Other data are
+published with permissive licenses (e.g., CC BY or CC BY-SA) and in very rare cases, CC BY-NC-SA. In Section 3.2,
+we breakdown the Lucie Training Dataset by category and show the contribution of each subcategory in terms of tokens
+to both the overall, raw dataset and to the final training dataset, for which certain datasets were upsampled. Section 3.3
+describes the various data-preprocessing approaches that were followed. For example, because of our emphasis on open
+data, multiple subsets of the Lucie Training Dataset come from public archives, which leads to an increased number of
+texts processed by Optical Character Recognition (OCR). We describe our efforts to select higher quality data from
+these subsets. We also explain how we filtered web data in order to improve training and to stick as closely as possible
+to our principles regarding data rights and privacy.
+We note that one of the corpora used to train the Lucie-7B model is not distributed in the Lucie Training Dataset and so
+not included in the list below. This is because after training had begun, we discovered that the corpus, whose material
+was taken from the Persée platform,18 contained copyrighted material. The full list of urls used for the corpus can be
+found on the Hugging Face repository for the Lucie Training Dataset in the file “persee_metadata_documents.csv”.19
+The file “persee_metadata_collections.csv” 20 gives statistics on document, word and character counts for the data
+grouped by collection. In all, the corpus contains a total of 3.25 billion words and 5.75 billion tokens, making up around
+0.25% of the raw corpus and 0.37% of the tokens seen during training (as the data were seen twice during training as
+explained in Section 3.2).
+3.1 Data subset details
+For each subset of the Lucie Training Dataset, we identify the subset by the key we attributed to it in the final dataset
+and give a short description of the data contained in the subset. If we obtained the data from an external source, we cite
+our source. Where relevant and possible, we provide further information about how our source originally acquired the
+content and references to papers that the sources asked to have cited.
+3.1.1 AmendementsParlement
+AmendementsParlement is a collection of proposed amendments by the French parliament extracted from Regards
+Citoyens (https://www.regardscitoyens.org/#&panel1-4).21 Documents contain the text of the proposed
+amendment, the name of the associated law, who voted on the amendment and what was decided.
+3.1.2 AmericanStories
+Source: https://huggingface.co/datasets/dell-research-harvard/AmericanStories .
+License: CC BY 4.0.
+AmericanStories (Dell et al., 2023) is “a collection of full article texts extracted from historical U.S. newspaper images.
+It includes nearly 20 million scans from the public domain Chronicling America22 collection maintained by the Library
+18https://www.persee.fr/
+19https://huggingface.co/datasets/OpenLLM-France/Lucie-Training-Dataset/blob/main/metadata/
+persee_metadata_documents.csv. The corresponding url is https://www.persee.fr/doc/$ID for each ID in the
+columnfile_id.
+20https://huggingface.co/datasets/OpenLLM-France/Lucie-Training-Dataset/blob/main/metadata/
+persee_metadata_collections.csv.
+21CC BY-SA:https://www.regardscitoyens.org/mentions-legales/
+22https://www.loc.gov/collections/chronicling-america/about-this-collection/ ; Open license:
+https://www.loc.gov/collections/chronicling-america/about-this-collection/rights-and-access/
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+of Congress. The dataset is designed to address the challenges posed by complex layouts and low OCR quality in
+existing newspaper datasets” (from the Hugging Face data card). The composition details for statistics on documents by
+year are shown in Figure 1. This dataset contains text retrieved through OCR.
+Figure 1: Distribution of documents by year in the AmericanStories dataset.
+3.1.3 Claire (French and English)
+Sources:
+• https://huggingface.co/datasets/OpenLLM-France/Claire-Dialogue-French-0.1 .
+License: CC BY-NC-SA 4.0.
+• https://huggingface.co/datasets/OpenLLM-France/Claire-Dialogue-English-0.1 .
+License: CC BY-NC-SA 4.0.
+The Claire datasets (Hunter et al., 2023) are composed of transcripts of spoken conversations—including parliamentary
+proceedings, interviews, debates, meetings, and free conversations—as well as some written conversations from theater
+plays and written chats. The dataset is designed to help downstream performance of models fine-tuned for tasks
+requiring the comprehension of spontaneous spoken conversation, such as meeting summarization. Each dialogue
+is split into speech turns, and each speech turn is labeled with the name of the speaker or a unique identifier. The
+composition details for the Claire French and English Datasets are shown in Figure 2. For details on the subsets of the
+Claire datasets, see the respective data cards on Hugging Face.
+Figure 2: Distribution of documents by type in the Claire French (left) and English (right) datasets.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+3.1.4 CroissantAligned
+Source: https://huggingface.co/datasets/croissantllm/croissant_dataset_no_web_data
+subset: aligned_36b;23 License: not specified
+CroissantAligned (Faysse et al., 2024) contains samples of parallel French/English (or English/French) data. Data
+extracted from OPUS24 (99.6% of the data in CroissantAligned) takes the form of sentences pairs, where one sentence
+is in French and the other is in English. OPUS pairs were passed through a custom pipeline designed to select the
+highest quality translation examples for CroissantLLM. The thesis abstract subset25 contains thesis abstracts paired with
+translations written by the thesis authors. The song lyrics are translated by contributors to www.lacoccinelle.net.
+Parallel data are used to boost the multilingual capabilities of models trained on them.
+3.1.5 DiscoursPublics
+DiscoursPublics is a collection of public speeches from the principal public actors in France including speeches from
+the French President starting from 1974 and from the Prime Minister and members of the government starting from
+1980. The speeches are extracted from Vie Publique.26
+3.1.6 Europarl and EuroparlAligned
+Sources:
+• fr-en,es-en,it-en parallel data: https://www.statmt.org/europarl/v7/. License: Open.
+• fr, en, de, es monolingual data and de-fr parallel data: https://www.statmt.org/europarl/v10/
+training-monolingual/. License: Open.
+The Europarl parallel corpus (Koehn, 2005) is “extracted from the proceedings of the European Parliament. It includes
+versions in 21 European languages: Romanic (French, Italian, Spanish, Portuguese, Romanian), Germanic (English,
+Dutch, German, Danish, Swedish), Slavik (Bulgarian, Czech, Polish, Slovak, Slovene), Finni-Ugric (Finnish, Hungarian,
+Estonian), Baltic (Latvian, Lithuanian), and Greek. The goal of the extraction and processing was to generate sentence
+aligned text for statistical machine translation systems” (https://www.statmt.org).
+3.1.7 Eurovoc
+Source: https://huggingface.co/datasets/EuropeanParliament/Eurovoc. License: EUPL 1.1 27
+Eurovoc (Chalkidis et al., 2019a,b; Avram et al., 2021; Shaheen et al., 2020) is a collection of multilingual documents
+from the data repository of the Publications Office of the European Union annotated with Eurovoc labels. The corpus
+contains legal, policy-related, historical and organizational information about the EU. Dataset containing text retrieved
+through OCR and extracted from Cellar.28
+3.1.8 FineWebEdu
+Source: https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu. License: ODC-BY .
+FineWebEdu (Penedo et al., 2024) is a 1.3 trillion token selection from FineWeb ( https://huggingface.co/
+datasets/HuggingFaceFW/fineweb), which contains 15 trillion tokens of curated data from 96 Common Crawl
+dumps. Content in FineWebEdu has been selected by a custom designed classifier for its high-quality, educational
+content. The most recent crawl was done in October 2024. Figure 3 shows the distribution of documents by year in the
+FineWebEdu dataset.
+23https://huggingface.co/datasets/croissantllm/croissant_dataset_no_web_data/tree/main/aligned_36b
+24https://opus.nlpl.eu/
+25License: ETALAB-Licence-Ouverte-v2.0
+26https://www.vie-publique.fr/collection-discours-publics ; ETALAB-Licence-Ouverte-v2.0:
+https://www.vie-publique.fr/mentions-legales
+27https://huggingface.co/datasets/EuropeanParliament/Eurovoc
+28https://op.europa.eu/en/web/cellar; CC BY 4.0.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Figure 3: Distribution of documents by year in the FineWebEdu dataset.
+3.1.9 GallicaMonographies
+Source: Corpus contributed by OpenLLM partners. A version is also published at https://huggingface.co/
+datasets/PleIAs/French-PD-Books . License: Public domain.
+GallicaMonographies is a large collection of French monographies in the public domain made available through the
+French National Library (https://gallica.bnf.fr/accueil/fr/content/accueil-fr?mode=desktop) and
+extracted from Gallicagram.29 Dataset containing text retrieved through OCR.
+3.1.10 GallicaPress
+Source: Corpus contributed by OpenLLM partners. A version is also published here: https://huggingface.co/
+datasets/PleIAs/French-PD-Newspapers . License: Public domain.
+GallicaPress is a large collection of French newspapers and periodicals in the public domain made available through the
+French National Library (https://gallica.bnf.fr/accueil/fr/content/accueil-fr?mode=desktop) and
+extracted from Gallicagram.30 Dataset containing text retrieved through OCR.
+3.1.11 Gutenberg
+The Gutenberg Project (https://www.gutenberg.org/) proposes a collection of free eBooks, manually prepared
+by human annotators. Our data is extracted from https://github.com/pgcorpus/gutenberg (CC BY 4.0) and
+directly from the Project Gutenberg site athttp://aleph.gutenberg.org/ (Open license).
+3.1.12 HAL
+Source: https://huggingface.co/datasets/bigscience-data/roots_fr_hal_archives_ouvertes.
+License: Roots dataset.
+The HAL dataset (Laurençon et al., 2022) is a collection of scientific papers and manuscripts distributed through the
+open science platform HAL (https://hal.science/). Dataset containing text retrieved through OCR.
+3.1.13 InterventionsParlement
+InterventionsParlement is a collection of transcripts of speeches made during French parliamentary debates. The data is
+extracted from Regards Citoyens.31
+3.1.14 LEGI and OpenData
+Source: Corpus contributed by OpenLLM partners. A version is also published at https://huggingface.co/
+datasets/Nicolas-BZRD/DILA_OPENDATA_FR_2023.
+29https://shiny.ens-paris-saclay.fr/app/gallicagram .
+30https://shiny.ens-paris-saclay.fr/app/gallicagram .
+31https://www.regardscitoyens.org/#&panel1-4; CC BY-SA.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+The OpenData (DILA) dataset32 is a French government collection of “text data extracted from various sources provided
+by the French government, specifically the Direction de l’Information Légale et Administrative (DILA). This dataset
+contains a wide range of legal, administrative, and legislative documents. The data has been organized into several
+categories for easy access and analysis” (the data card).
+3.1.15 MathPile (Commercial)
+Source: https://huggingface.co/datasets/GAIR/MathPile_Commercial. License: CC BY-SA 4.0.
+Mathpile (Wang et al., 2024) is a preprocessed collection of documents focused on math, including Textbooks, arXiv,
+Wikipedia, ProofWiki, StackExchange, and web pages from Common Crawl. The content targets a range of levels, from
+kindergarten through postgraduate level. MathPile Commercial was obtained by removing documents from MathPile33
+that do not allow commercial use.
+3.1.16 OpenEdition
+OpenEdition34 is a collection of scientific books, journal articles, blog entries and event descriptions.
+3.1.17 PeS2o (v2)
+Source: https://huggingface.co/datasets/allenai/peS2o version v2. License: ODC BY-v1.0.35
+PeS2o (Soldaini and Lo, 2023) is a preprocessed collection of academic papers designed for pretraining of language
+models. PeS2o is composed of two subsets: one containing full papers and one containing only paper titles and
+abstracts. Dataset containing (some) text retrieved through OCR. Knowledge cutoff: 2023-01-03. PeS2o is extracted
+fromhttps://github.com/allenai/s2orc.36
+3.1.18 Pile (Uncopyrighted)
+Source: https://huggingface.co/datasets/monology/pile-uncopyrighted. License: Other.37
+The Pile (Gao et al., 2020; Biderman et al., 2022)38 is a collection of various subsets. We selected the following for
+training Lucie-7B (descriptions taken from Biderman et al. (2022)):
+• FreeLaw (https://free.law/): “The Free Law Project is US registered non-profit that provide access to
+millions of legal opinions and analytical tools for academic studies in the legal realm.”
+• StackExchange (https://stackexchange.com/): “The StackExchange dataset is a dump of anonymized
+user-contributed content on the Stack Exchange network, a popular collection of websites centered around
+user-contributed questions and answers.”
+• USPTO Backgrounds (https://bulkdata.uspto.gov/): “The USPTO Backgrounds dataset is a set of
+background sections from patents granted by the United States Patent and Trademark Office, derived from its
+published bulk archives.”
+• DM Mathematics (https://github.com/google-deepmind/mathematics_dataset): “The DeepMind
+Mathematics dataset consists of a collection of mathematical problems such as algebra, arithmetic, calculus,
+number theory, and probability, formatted as natural language prompts Saxton et al. (2019).”
+• Ubuntu IRC (https://irclogs.ubuntu.com/): “The Ubuntu IRC dataset is derived from the publicly
+available chatlogs of all Ubuntu-related channels on the Freenode IRC chat server.”
+• PhilPapers (https://philpapers.org/): a “dataset of open access philosophy publications from an international database maintained by the Center for Digital Philosophy at the University of Western Ontario.”
+• NIH ExPORTER: “The NIH Grant abstracts provides a bulk-data repository for awarded applications through
+the ExPORTER service covering the fiscal years 1985-present.”
+32https://echanges.dila.gouv.fr/OPENDATA/; Data collection date: October, 2023.
+33https://huggingface.co/datasets/GAIR/MathPile; CC BY-SA-NC 4.0.
+34https://www.openedition.org/: Open Edition license: https://www.openedition.org/12554.
+35https://github.com/allenai/s2orc/
+36S2ORC; cf.https://aclanthology.org/2020.acl-main.447/; ODC BY-v1.0.
+37https://huggingface.co/datasets/monology/pile-uncopyrighted
+38https://huggingface.co/datasets/EleutherAI/pile; MIT License.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+3.1.19 QuestionsEcritesParlement
+QuestionsEcritesParlement is a collection of long written questions, read during a session at the French National
+Assembly. Questions are asked by a member of the French parliament and addressed to a minister (who is given two
+months to respond). Data is extracted from Regards Citoyens.39
+3.1.20 RedPajama (v2)
+Source: https://huggingface.co/datasets/togethercomputer/RedPajama-Data-V2 . Data license: not
+specified (data) but see Common Crawl terms of use.40 License for data preparation code: Apache 2.0.
+RedPajama v2 (Weber et al., 2024) is an “open dataset for training large language models. The dataset includes over
+100B text documents coming from 84 CommonCrawl (https://commoncrawl.org/) snapshots and processed using
+the CCNet (Wenzek et al., 2020)41 pipeline. Out of these, there are 30B documents in the corpus that additionally come
+with quality signals, and 20B documents that are deduplicated” (fromhttps://github.com/togethercomputer/
+RedPajama-Data). Most recent crawl for French data in the Lucie Training Dataset v1.1 (see Section 3.3): 2023-14.
+Figure 4 shows the distribution of documents by year in the RedPajama dataset.
+Figure 4: Distribution of documents by year in the RedPajama v2 dataset for French, German, Spanish, and Italian.
+3.1.21 STAC
+Source: https://www.irit.fr/STAC/corpus.html. License: CC BY-SA-NC 4.0.
+STAC (Asher et al., 2016) is a collection of multiparty chats from an online version of the game Settlers of Catan. The
+full STAC corpus contains annotations for discourse structure. We use only the text of the chats.
+39https://www.regardscitoyens.org/#&panel1-4; CC BY-SA.
+40https://commoncrawl.org/terms-of-use
+41https://github.com/facebookresearch/cc_net
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+3.1.22 TheStack (deduplicated v1.2)
+Source: https://huggingface.co/datasets/bigcode/the-stack-dedup . License: Other (mixture of copyleft
+licenses)42.
+The Stack (Kocetkov et al., 2022) “contains over 6TB of permissively-licensed source code files covering 358 programming languages. The dataset was created as part of the BigCode Project, an open scientific collaboration working on
+the responsible development of Large Language Models for Code (Code LLMs). The Stack serves as a pretraining
+dataset for Code LLMs, i.e., code-generating AI systems which enable the synthesis of programs from natural language
+descriptions as well as other from code snippets. This is the near-deduplicated version with 3TB data” (from the
+Hugging Face data card). Data is extracted from https://github.com/ via GHarchive.43
+3.1.23 Theses
+The theses dataset is a collection of doctoral theses published in France viahttps://theses.fr/?domaine=theses44
+and the open-access platform, HAL.45 Dataset containing text retrieved through OCR.
+3.1.24 Wikipedia, Wikisource, Wiktionary
+The Wiki datasets are extracted from the Wikimedia dumps46 and formatted in markdown. They are also published as
+separate collections on Hugging Face.47
+These datasets are a plain text version of wikipedia.org pages for several languages (English, German, French, Spanish,
+Italian), as well as https://fr.wikisource.org and https://fr.wiktionary.org. The Wikipedia datasets
+were generated from the dump made on February 1, 2024. The dumps used for fr.wikisource.org and fr.wiktionary.org
+were those from December 1, 2023 and December 20, 2023, respectively.
+3.1.25 YouTube
+The YouTube dataset consists of subtitles from YouTube videos collected from https://www.youtube.com/ by
+LINAGORA Labs and LeV oiceLab48 at the end of 2022.
+3.2 Dataset composition
+Figure 5 shows the distribution of the Lucie Training Dataset. Nearly a third of the raw data comes from the French
+subset of RedPajama, while a fifth of the data comes from FineWebEdu, a subset of FineWeb that has been classified as
+containing high-quality educational content in English. The remaining data comes from a variety of sources as shown
+in the “Categories” column of the legend of Figure 5. Overall, 40% of the data comes from French sources.
+42https://huggingface.co/datasets/bigcode/the-stack-dedup
+43https://www.gharchive.org/; mixed licenses for source.
+44Licence Ouverte/Open License version 2.0:
+https://www.data.gouv.fr/fr/datasets/theses-soutenues-en-france-depuis-1985/
+45https://about.hal.science/
+46https://dumps.wikimedia.org/other/enterprise_html/runs/.
+GFDL/CC BY-SA:https://dumps.wikimedia.org/legal.html
+47https://huggingface.co/datasets/OpenLLM-France/wikipedia,
+https://huggingface.co/datasets/OpenLLM-France/wikisource,
+https://huggingface.co/datasets/OpenLLM-France/wiktionary
+48https://www.levoicelab.org/
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Figure 5: Composition of the raw training data (2.32 billion tokens), by language (colors) and category (hatch patterns).
+Figure 6: Composition of the training data after up-sampling some subsets, used in the first phase of Lucie-7B
+pretraining (3.11 billion tokens).
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Figure 6 shows the distribution of data that was actually seen by the model after upsampling certain datasets. Higher
+quality datasets, such as Wikipedia and Gutenberg books, were seen 3 times. Lower-quality data coming from OCR
+sources such as HAL or Gallica Press, were seen only 1 or 2 times. Very large datasets such as RedPajama and
+FineWebEdu were only seen once. Details are provided in Table 1. The resulting dataset composition contains nearly
+equal amounts of French and English data and a lower overall proportion of French web data.
+Table 1: Epochs per dataset
+Datasets Epochs
+Eurovoc (en), GallicaPress, Pile (FreeLaw), RedPajama 1
+AmericanStories, FineWebEdu 1.5
+AmendementsParlement, Claire, DiscoursPublics, Europarl, Eurovoc (es/it/de), 2
+Gallica Monographies, Gutenberg (fr), HAL, InterventionsParlement, OpenData/LEGI, 2
+Persée, OpenEdition, QuestionsEcritesParlement, STAC, TheStack, Theses, YouTube 2
+Pile (NIH, PhilPapers, StackExchange, Ubuntu_IRC, USPTO_Backgrounds), PeS2o 2.5
+Gutenberg (de/en/es/it), Pile (DM_Math), Wikimedia, CroissantAligned, EuroparlAligned 3
+Table 2 gives the number of documents, words, tokens, and characters for each language in the dataset. Table 3 provides
+an overview of the dataset composition, broken down by sources and language and grouped by category. Table 4 shows
+the distribution of all programming languages in the dataset (TheStack subset).
+Table 2: Composition of the Lucie Training Dataset, broken down by language.
+Language M docs B words B tokens B chars
+fr 653.812 583.687 928.618 3619.672
+en 554.289 412.202 611.894 2553.541
+code 125.769 51.306 228.954 630.749
+de 165.915 105.609 206.610 764.779
+es 171.651 123.857 200.825 759.457
+it 99.440 62.051 112.031 404.454
+fr-en 410.032 17.016 25.494 107.658
+it-en 1.901 0.100 0.151 0.638
+es-en 1.961 0.103 0.143 0.631
+de-fr 1.792 0.0908 0.141 0.621
+TOTAL 2186.562 1356.021 2314.862 8842.200
+Table 3: Composition of the Lucie Training Dataset, broken down by category, language and original source.
+All statistics in this table are also available athttps://huggingface.co/datasets/OpenLLM-France/
+Lucie-Training-Dataset/blob/main/metadata/dataset_composition.csv . Token counts are
+computed using the tokenizer for Lucie-7B.
+Category Dataset Language M docs B words B tokens B chars
+Web RedPajama fr 640.770 477.758 741.023 2974.596
+FineWebEdu en 421.209 327.453 467.837 2018.215
+RedPajama de 162.779 103.078 201.371 747.631
+es 169.447 121.751 197.125 746.984
+it 97.324 60.194 108.416 393.012
+Newspaper GallicaPress fr 3.205 67.496 121.606 408.882
+AmericanStories en 59.420 8.902 14.313 50.844
+Technical PeS2o en 38.972 42.296 65.365 268.963
+HAL fr 0.349 9.356 16.224 58.308
+Theses fr 0.102 7.547 14.060 47.758
+Pile (USPTO_Backgrounds) en 5.139 3.492 5.105 22.309
+OpenEdition fr 0.939 2.225 3.604 14.459
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Pile (PhilPapers) en 0.0308 0.363 0.618 2.304
+Pile (NIH_ExPorter) en 0.914 0.288 0.431 1.979
+Book GallicaMonographies fr 0.278 15.106 25.169 90.456
+Gutenberg en 0.0563 3.544 5.516 20.579
+fr 0.00345 0.227 0.383 1.392
+de 0.00188 0.0987 0.193 0.654
+it 0.000958 0.0657 0.129 0.414
+es 0.000735 0.0512 0.0920 0.303
+Legislative Texts Pile (FreeLaw) en 3.415 8.204 14.011 52.580
+Eurovoc en 0.272 1.523 2.571 9.468
+it 0.245 0.731 1.527 4.867
+de 0.247 0.678 1.497 4.915
+es 0.246 0.757 1.411 4.684
+OpenData fr 1.169 0.755 1.209 4.638
+QuestionsEcritesParlement fr 0.189 0.108 0.156 0.705
+LEGI fr 0.621 0.0878 0.145 0.563
+AmendementsParlement fr 0.673 0.0452 0.0738 0.274
+Legislative Transcripts DiscoursPublics fr 0.110 0.163 0.238 1.025
+InterventionsParlement fr 1.832 0.104 0.157 0.654
+Europarl de 0.0102 0.0451 0.0734 0.327
+es 0.0103 0.0524 0.0733 0.325
+fr 0.0103 0.0528 0.0717 0.339
+en 0.0111 0.0563 0.0690 0.339
+Wiki Wikipedia en 6.893 4.708 7.898 26.616
+de 2.877 1.709 3.476 11.252
+fr 2.648 1.726 2.940 9.879
+es 1.947 1.245 2.124 7.161
+it 1.870 1.060 1.959 6.161
+Wikisource fr 0.186 0.523 0.795 3.080
+Wiktionary fr 0.650 0.0531 0.117 0.347
+Math MathPile en 0.737 3.408 9.637 27.290
+Pile (DM_Mathematics) en 0.992 1.746 4.928 8.127
+Forum Pile (StackExchange) en 15.269 4.534 10.275 33.609
+Pile (Ubuntu_IRC) en 0.0104 0.867 2.159 5.610
+Dialogue Claire en 0.949 0.818 1.161 4.709
+fr 0.0393 0.210 0.311 1.314
+YouTube fr 0.0375 0.145 0.336 1.003
+Stac en 0.0000450 0.0000529 0.000121 0.000327
+Multilingual Parallel CroissantAligned fr-en 408.029 16.911 25.351 107.003
+EuroparlAligned it-en 1.901 0.100 0.151 0.638
+fr-en 2.003 0.105 0.143 0.655
+es-en 1.961 0.103 0.143 0.631
+de-fr 1.792 0.0908 0.141 0.621
+Programming TheStack code 125.769 51.306 228.954 630.749
+3.3 Data preparation
+In this section we describe the different pre-processing methods applied to improve the quality of our training dataset
+and to abide by our principles regarding data rights and privacy. In particular, we discuss how we filtered documents
+processed with OCR, selected web data, formatted parallel translation data and standardized metadata, among other
+filtering and cleaning methods.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Table 4: Distribution of programming languages included in the Lucie Training Dataset. Data taken from TheStack.
+All numbers in this table are available in the CSV file athttps://huggingface.co/datasets/OpenLLM-France/
+Lucie-Training-Dataset/blob/main/metadata/dataset_composition.csv . Token counts are computed using the tokenizer for Lucie-7B.
+Language M docs B words B tokens B chars
+JA V ASCRIPT 21.109 8.526 58.609 141.647
+JA V A 20.152 7.421 27.680 89.297
+C 8.626 5.916 24.092 57.428
+PHP 15.905 4.865 22.883 66.844
+PYTHON 12.962 5.434 21.683 64.304
+C++ 6.378 4.584 18.835 50.892
+C# 10.839 3.574 13.381 46.286
+GO 4.730 2.735 10.262 25.738
+TYPESCRIPT 10.637 2.617 9.836 28.815
+RUST 1.387 0.872 3.241 9.529
+RUBY 3.405 0.646 2.392 7.139
+SWIFT 1.756 0.553 1.876 6.134
+KOTLIN 2.243 0.454 1.758 5.769
+SCALA 1.362 0.457 1.587 4.862
+TEX 0.398 0.394 1.507 3.805
+LUA 0.559 0.318 1.367 3.279
+DART 0.933 0.308 1.242 3.864
+PERL 0.392 0.297 1.149 2.634
+MATHEMATICA 0.0269 0.120 1.117 1.720
+ASSEMBLY 0.248 0.209 0.867 1.575
+HASKELL 0.545 0.307 0.807 2.364
+FORTRAN 0.165 0.192 0.780 1.843
+JULIA 0.299 0.152 0.660 1.539
+OCAML 0.160 0.130 0.430 1.107
+ERLANG 0.0994 0.0657 0.260 0.726
+ELIXIR 0.282 0.0731 0.258 0.737
+CLOJURE 0.126 0.0448 0.179 0.492
+R 0.0392 0.0278 0.158 0.305
+MATLAB 0.000967 0.00865 0.0427 0.0372
+RACKET 0.00420 0.00479 0.0153 0.0378
+We note that pre-processing was done in two stages leading to two versions of the Lucie Training Dataset, v1.1 and
+v1.2. The latter was produced during the context length extension phase described in Section 4.3.3 and targeted four
+datasets used in this phase: Gallica Monographies, Gallica Press, and Ubuntu_IRC and PhilPapers from the Pile.
+3.3.1 OCR data filtering
+In an effort to remove particularly noisy OCR documents, we evaluated some of our datasets for perplexity. The use of
+small language models for corpus perplexity evaluation and data selection was introduced in the CCNet paper (Wenzek
+et al., 2020), where 5-gram Kneser-Ney language models were trained for 48 languages using their respective Wikipedia
+articles. These models are highly advantageous due to their low training and inference costs, especially when
+implemented with the KenLM (Heafield, 2011) library. They are trained on text tokenized with SentencePiece, which
+segments text into subwords based on statistical patterns, improving the models’ ability to estimate perplexity for
+unusual character sequences. We note that RedPajama also uses CCNet models to filter CommonCrawl content as part
+of its metrics aggregation.
+We find in practice that these models provide effective signals for filtering problematic OCR texts, and we manually
+determined for each corpus the ideal perplexity threshold below which we did not observe a high incidence of OCR
+problems. Our code for computing CCNet perplexity with parallelization on arbitrary parquet files is available at
+https://github.com/OpenLLM-France/Lucie-dataset-filtering . Table 5 lists the thresholds chosen per
+OCR-based corpus (where documents over the threshold are discarded):
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Table 5: CCNet perplexity scores chosen as thresholds for discarding particularly noisy OCR documents.
+Corpus CCNet threshold
+American Stories 2310
+Eurovoc 1500
+HAL 930
+Thèses 2000
+The process was slightly more elaborate for Gallica Monographies and Gallica Press. In version 1.1 of the dataset,
+documents from these corpora were split into chunks and chunks were kept if the source language was detected as
+French byFastText (Joulin et al., 2017) with a confidence score of 0.65 or above, and the perplexity score, as measured
+using a CCNET model in French, was between 10 and 1000. In version 1.2, we used OCR scores already available in
+the metadata of the source corpora. In this case, documents were scored on a scale of 0-100, with 100 being the highest
+quality. We kept documents with an OCR score of at least 90 out of 100.
+3.3.2 Web data filtering
+For both FineWebEdu and RedPajama, we filtered out urls whose base domain overlapped with a dataset already in the
+Lucie Training Dataset (e.g.,philpapers.org,theses.fr) in order to increase diversity of content. In an effort to
+select data free from opt-out evidence according to the 4th article of the copyright European directive (2019), we also
+filtered out any urls that either did not have arobots.txt or that disallowed the CCBot as of July 2024.
+For RedPajama, we performed further filtering and deduplication in an effort to select higher quality data. Among
+the metadata in RedPajama are tags indicating toxicity of certain urls based on the blacklists in https://dsi.
+ut-capitole.fr/blacklists/. We filtered out urls from this blacklist.
+A series of filters based on quality signals available in RedPajama was also used. 49 In particular, we used CCNet
+perplexity to filter out documents with perplexity below 10 or above 1000. We used C4 filtering, which included
+removal of documents containing toxic words. We also used gopher filtering and repetition removal as document
+deduplication. Finally, we used regular expressions to replace email addresses and IP addresses with random addresses
+and used theDatatrove50 library to perform MinHash deduplication on each snapshot and language independently,
+following practices in FineWeb. (Datatrove was also used to manage the other url filtering described above, though
+filtering was based on scores provided by RedPajama rather than scores recalculated withDatatrove.)
+3.3.3 Extraction of YouTube videos
+The extraction pipeline consisted of the following steps:
+1. Searching for YouTube videos likely in French:Based on searches generated automatically from random
+sequences of words extracted from a corpus of French journalistic articles (initially obtained through a web
+crawling tool applied to publicly accessible news and media sites such as Huffington Post, 20 Minutes, Le
+Parisien, Actu, Numerama, Slate, etc.). Selection of videos with subtitles labeled as “French,” excluding those
+marked as “automatically generated.”
+At this stage: 52,778 videos selected, corresponding to 10,654 hours of audio.
+2. Selection of videos whose subtitle language classification confirms French with a certain confidence score
+At this stage: 51,934 videos selected, corresponding to 10,425 hours of audio.
+3. Selection of videos whose subtitles contain uppercase, lowercase, and punctuation marks:This step filters
+out automatically generated subtitles created with speech recognition tools.
+At this stage: 45,488 videos selected, corresponding to 8,904 hours of audio.
+4. Extraction of audio tracks from the selected videos.
+5. Automatic formatting of transcripts obtained from subtitles: Removal of emojis, sound event annotations
+in brackets (like “[Music]”) and extra text such as “subtitled by XXX” (shown during the final seconds of the
+video).51
+49https://github.com/togethercomputer/RedPajama-Data?tab=readme-ov-file#quality-annotations
+50https://github.com/huggingface/datatrove
+51Removing subtitle meta-annotations was done to avoid an unwanted bias we observed when performing Automatic Speech
+Recognition with OpenAI’s Whisper model, trained on a similar Youtube crawling dataset: the model tends to predict things like
+“subtitles from amara.org community” on input audio with just silence.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+6. Selection of videos where an automatic speech recognition tool correctly transcribes the first 30 seconds
+with a minimum recall and precision rate:
+At this stage: 37,513 videos selected, corresponding to 7,541 hours of audio.
+7. Realignment of the transcript: Ensuring accurate timestamps in the transcriptions based on the subtitles and
+excluding audios where alignment fails.
+At this stage: 36,618 videos selected, corresponding to 6,729 hours of audio, including 4,293 hours of speech
+(after removing silence and music backgrounds).
+3.3.4 Multilingual aligned corpora
+The original text field of the CroissantLLM dataset52 contains a sentence or passage in French or English immediately
+followed by its translation without any indication of which passage is in which language. To prepare these data for
+training, we first split each text into separate, monolingual passages and then tagged each passage with the appropriate
+language code, identified automatically using thelangid Python library.53 In the Lucie Training Dataset, theextra
+metadata field for CroissantAligned contains separate keys,text_fr for French andtext_en for English, that store
+the texts separately (see Section 3.3.7). The Europarl parallel data were already tagged by language. The extra field in
+the metadata for EuroparlAligned provides texts in the two languages under the sub-fieldstext_1 andtext_2, and the
+corresponding language codes underlang_1 andlang_2.
+For both Croissant Aligned and Europarl parallel data, each monolingual text was paired with its translation, but random
+separators and various methods of prefixing the text with the language (name or code) were added. This was done as a
+precaution to prevent models trained on this data from switching languages when generating text and can be seen as a
+very basic instruction to translate the source (first) text into the target (second) text.
+3.3.5 Formatting of Wiki datasets
+The text for the Wiki datasets is plain, without HTML tags or wiki templates, but includes markdown syntax for headers,
+lists and tables, and some formulas in LATEX. The code used to convert Wikimedia dumps to the dataset is available under
+a GPLv3 license athttps://github.com/OpenLLM-France/wikiplaintext. Some notes about text formatting:
+• Superscripts and subscripts are kept as unicode characters when possible and when not in math formulas. For
+instance: XIIIe siècle, 3 000 m², P 2 O 7 4-.
+• Tables are formatted in markdown. For instance:
+| Français | Espéranto | IPA |
+| Salut, bonjour | Saluton | [sa.'lu.ton] |
+| Oui | Jes | ['jes] |
+| Non | Ne | ['ne] |
+| Bonsoir | Bonan vesperon | ['bo.nan ves.'pe.ron] |
+| Bonne nuit | Bonan nokton | ['bo.nan 'nok.ton] |
+• Lists are formatted in markdown. For instance:
+* 1 000 personnes ont l'espéranto comme langue maternelle ;
+* 10 000 personnes parlent l'espéranto avec un niveau proche d'une langue maternelle ;
+* 100 000 personnes parlent couramment l'espéranto ;
+• Headers are formatted in markdown. For instance:
+52https://huggingface.co/datasets/croissantllm/croissant_dataset_no_web_data
+53https://pypi.org/project/langid/
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+# Espéranto
+L'espéranto est une langue construite internationale utilisée comme langue véhiculaire [...]
+Fondée sur une grammaire régulière sans exception, l'espéranto est une langue globaleme[...]
+C’est en 1887 que Louis-Lazare Zamenhof, sous le pseudonyme Doktoro Esperanto (Docteur [...]
+L’Association universelle d’espéranto, fondée en 1908, est en relation officielle avec [...]
+## Définition
+### Nom
+Le pseudonyme «Doktoro Esperanto» (Docteur « Espérant »), utilisé par Zamenhof pour pré[...]
+#### Utilisation du mot espéranto en tant que métaphore
+Le nom espéranto fonctionne comme un nom propre quand il désigne la langue même, mais e[...]
+Dans le domaine de l'informatique, Java fut qualifié d'« espéranto des langages de prog[...]
+3.3.6 Further filtering and cleaning
+DiscoursPublics: the mention of the source URL and the number of views were removed from the text.
+Eurovoc: Mentions of Credit Institutions Directives (CID) that appear in the raw texts such as “ (cid:146)” were
+removed.
+Gutenberg: Books were filtered based on their author’s date of death, so that only texts from authors who died more
+than 70 years ago are included (80 years for French authors). This filtering was done to ensure that the texts are in
+the public domain. For each document, headers and and footers containing information about Project Gutenberg were
+removed.
+MathPile (Commercial): The content of StackExchange questions and answers were converted to match the {"text":
+value} format described in 3.3.7 below, using the following python code:
+text = sample["question"]["Body"] + "\n\n".join(
+[answer["Body"] for answer in sample["answers"]]
+)
+Pile (Uncopyrighted): In version 1.2 only, papers were removed from PhilPapers if their language, detected using
+Stanza,54 was not classified as English, French, German, Spanish or Italian. Texts were removed from Ubuntu IRC if
+they came from channels predominantly in languages other than English, French, German, Spanish or Italian. Certain
+encoding errors were also fixed.
+Thèses: Title pages about HAL,55 pages containing a significant fraction of control characters, and duplicate lines were
+removed. Texts with fewer than 1 000 words or 10 000 characters were removed.
+3.3.7 Metadata normalization
+Each sample in the Lucie Training Dataset comes with the following fields:
+• “text”: the text content of the document.
+• “language”: the language of the text sample (note that this information is taken from the original data source
+and may be incorrect). Possible values are:
+– the ISO 639-1 code for a given natural language (“en”, “fr”, “de”, “es”, or “it”),
+– the name of a programming language prefixed by “code:. . . ” (“code:python”, “code:c++”, . . . ), or
+– a list of ISO 639-1 codes separated by commas for data containing parallel translations (“ fr,en”,
+“de,fr”, “es,en”, “it,en”, or one of those pairs in the opposite order if the languages appear in the
+opposite order in the text).
+• “source”: an identifier for the source(s) of the text sample. Possible values for the source are the following
+camel-cased strings listed, and correspond to subsets detailed in Section 3.1: AmendementsParlement, AmericanStories, Claire, CroissantAligned, DiscoursPublics, Europarl, EuroparlAligned, Eurovoc, FineWebEdu,
+54https://github.com/stanfordnlp/stanza
+55https://theses.hal.science/
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+GallicaMonographies, GallicaPress, Gutenberg, HAL, InterventionsParlement, LEGI, MathPile, OpenData,
+OpenEdition, PeS2o, Pile, QuestionsEcritesParlement, RedPajama, STAC, TheStack, Theses, Wikipedia,
+Wikisource, Wiktionary, YouTube.
+• “id”: an identifier that is unique among documents from the same source.
+• “url” (optional): the URL of the original text sample on the web, if available.
+• “title” (optional): the title of the original text sample, if available.
+• “author” (optional): the author of the original text sample, if available.
+• “date” (optional): the publication date of the original text sample, if available.
+• “quality_signals” (optional): a list of quality signals for the text sample in JSON format (which could be
+used for further filtering or sample weighting). It can include indicators computed by ‘fasttext‘ and ‘CCNet‘,
+statistics about occurrences of characters, words, special characters, etc.
+• “extra” (optional): extra information about the text sample, in JSON format. This can include metadata about
+the source subset, the rights, etc.
+Here is an example from the Lucie Training Dataset:
+{
+"text": "DROPOSALS FOR THE ERECTION AMI\na completion of Building, in accordance with...",
+"language": "en",
+"source": "AmericanStories",
+"id": "16_1858-12-04_p3_sn84038814_00279557177_1858120401_0390",
+"url": "",
+"title": "miscellaneous.\n\n\nNOTICE\nTO BUILDERS.",
+"author": "",
+"date": "1858-12-04",
+"quality_signals": "{\"char_count\": 670, \"word_count\": 116, \"ccnet_language_score\": 0.939,
+\"ccnet_perplexity\": 1389.5, \"fasttext_language\": \"en\"}",
+"extra": "{\"newspaper_name\": \"Daily national Democrat\", \"edition\": \"01\", \"page\": \"p3\"}"
+}
+3.4 Dataset release
+The dataset can be found on Hugging Face at https://huggingface.co/datasets/OpenLLM-France/
+Lucie-Training-Dataset.
+Configurations are available to load only a subset of the data, e.g.,
+• only the data in a given language (e.g., French, all code data, or just a specific programming language),
+• only the data from a given source (e.g., only the data from the RedPajama source),
+• only the data from a given source in a given language (e.g., only data from wikipedia.fr),
+Here are some examples of python code to load the dataset:
+1 from datasets import load_dataset
+3 kwargs = dict(split="train", streaming=True)
+5 dataset_french = load_dataset("OpenLLM-France/Lucie-Training-Dataset", "fr", **kwargs)
+7 dataset_wikipedia = load_dataset("OpenLLM-France/Lucie-Training-Dataset", "Wikipedia", **kwargs)
+9 dataset_wikipedia_fr = load_dataset("OpenLLM-France/Lucie-Training-Dataset", "Wikipedia-fr", **kwargs)
+11 dataset_code = load_dataset("OpenLLM-France/Lucie-Training-Dataset", "code", **kwargs)
+13 dataset_code_python = load_dataset("OpenLLM-France/Lucie-Training-Dataset", "code-python", **kwargs)
+The list of all the possible configurations can be obtained by running the following code:
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+1 from datasets import load_dataset_builder
+3 config_names = list(load_dataset_builder("OpenLLM-France/Lucie-Training-Dataset").builder_configs)
+5 print(config_names)
+['default', 'en', 'fr', 'de', 'es', 'it', 'de,fr', 'es,en', 'fr,en', 'it,en', 'natural', 'code',
+'code-assembly', 'code-c', 'code-c#', 'code-c++', 'code-clojure', 'code-dart', 'code-elixir',
+'code-erlang', 'code-fortran', 'code-go', 'code-haskell', 'code-java', 'code-javascript',
+'code-julia', 'code-kotlin', 'code-lua', 'code-mathematica', 'code-matlab', 'code-ocaml',
+'code-perl', 'code-php', 'code-python', 'code-r', 'code-racket', 'code-ruby', 'code-rust',
+'code-scala', 'code-swift', 'code-tex', 'code-typescript', 'AmendementsParlement', 'AmericanStories',
+'Claire', 'Claire-en', 'Claire-fr', 'CroissantAligned', 'DiscoursPublics', 'Europarl', 'Europarl-de',
+'Europarl-en', 'Europarl-es', 'Europarl-fr', 'EuroparlAligned', 'EuroparlAligned-de,fr',
+'EuroparlAligned-es,en', 'EuroparlAligned-fr,en', 'EuroparlAligned-it,en', 'Eurovoc', 'Eurovoc-de',
+'Eurovoc-en', 'Eurovoc-es', 'Eurovoc-it', 'FineWebEdu', 'GallicaMonographies', 'GallicaPress',
+'Gutenberg', 'Gutenberg-de', 'Gutenberg-en', 'Gutenberg-es', 'Gutenberg-fr', 'Gutenberg-it', 'HAL',
+'InterventionsParlement', 'LEGI', 'MathPile', 'OpenData', 'OpenEdition', 'PeS2o', 'PeS2o-s2ag',
+'PeS2o-s2orc', 'Pile', 'Pile-DM_Mathematics', 'Pile-FreeLaw', 'Pile-NIH_ExPorter', 'Pile-PhilPapers',
+'Pile-StackExchange', 'Pile-USPTO_Backgrounds', 'Pile-Ubuntu_IRC', 'QuestionsEcritesParlement',
+'RedPajama', 'RedPajama-de', 'RedPajama-es', 'RedPajama-fr', 'RedPajama-it', 'Stac', 'TheStack',
+'Theses', 'Wikipedia', 'Wikipedia-de', 'Wikipedia-en', 'Wikipedia-es', 'Wikipedia-fr', 'Wikipedia-it',
+'Wikisource', 'Wiktionary', 'YouTube']
+By default, the dataset on Hugging Face corresponds to the one used in the first phase of Lucie-7B pretraining (Section
+4.3.2), but other versions are available. For instance, the following code can be run to load a more recent version of the
+data, where some subsets were improved in terms of quality (Section 3.3), and used in the second phase of Lucie-7B
+pretraining (context length extension, explained in section 4.3.3):
+1 from datasets import load_dataset
+3 kwargs = dict(split="train", streaming=True)
+5 name = None # or a configuration (e.g. "fr", "code-python", "Wikipedia-fr", "Pile-PhilPapers")
+7 dataset_v2 = load_dataset("OpenLLM-France/Lucie-Training-Dataset", name, revision="v1.2", **kwargs)
+4 Lucie-7B LLM
+Lucie-7B is a decoder-only model trained on a causal language modeling task, i.e., it learns to predict the next token.
+The model was trained on Jean-Zay,56 the French national supercomputing cluster, using Megatron-Deepspeed, a library
+designed for distributed training. This library combines the general GPT architecture and tensor parallelism from
+Megatron-LM Shoeybi et al. (2020); Narayanan et al. (2021); Korthikanti et al. (2023) with DeepSpeed’s efficient
+Zero Optimizer, as well as pipeline and data parallelism. The training code is available at https://github.com/
+OpenLLM-France/Lucie-Training . It is based on a fork of Megatron-DeepSpeed available athttps://github.
+com/OpenLLM-France/Megatron-DeepSpeed .
+4.1 Neural network architecture
+Lucie-7B is a transformer with the same neural network architecture as Llama3.1, with the exception of the feed-forward
+hidden size and vocabulary size.57 It has exactly 6,706,958,336 free parameters, with the hyperparameter values listed
+in Table 6. The θ parameter of Rotary Positional Embedding (RoPE) was set to 500,000 during the first phase of
+pretraining (Section 4.3.2) and increased to 20 million during context length extension (Section 4.3.3). The higher value
+was maintained for the rest of the training process.
+56http://www.idris.fr/eng/jean-zay/jean-zay-presentation-eng.html
+57https://huggingface.co/meta-llama/Llama-3.1-8B
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Table 6: Hyperparameters of Lucie-7B’s architecture. (†)Theθ parameter of Rotary Positional Embedding (RoPE) was
+increased during context length extension.
+Hyperparameter Value
+V ocabulary size (# tokens) 65,024
+# transformer blocks 32
+# attention heads 32
+# key-value heads 8
+Hidden size 4,096
+Feed-Forward hidden size 12,288
+Activation SILU
+RMS norm epsilon 1e-5
+RoPEθ 500k / 20M (†)
+4.2 Tokenization
+The Lucie-7B tokenizer decomposes text into subword tokens. It was trained using Byte-Pair Encoding (BPE) as
+described by Sennrich et al. (2015). We used unicode-level BPE with byte fallback, to avoid out-of-vocabulary,
+following the tokenizers of Llama 2, Mistral-7B and CroissantLLM. The tokenizer was optimized on a subset of the
+Lucie Training Dataset that includes:
+• English:
+– 1,074 M words from Wikipedia (https://en.wikipedia.org/)
+– 28 M words from Europarl (English subset)
+• French:
+– 863 M words from Wikipedia (https://fr.wikipedia.org/)
+– 148 M words from Persée
+– 94 M words from GallicaMonographies
+– 25 M words from Europarl (French subset)
+• Spanish:
+– 103 M words from Wikipedia (https://es.wikipedia.org/)
+– 26 M words from Europarl (Spanish subset)
+• German:
+– 92 M words from Wikipedia (https://de.wikipedia.org/)
+– 23 M words from Europarl (German subset)
+• Italian: 314 M words from Wikipedia (https://it.wikipedia.org/)
+• Programming Languages: 198 M words from TheStack
+The vocabulary size is 65,024 tokens, which is in the order of magnitude of what is recommended by Tao et al. (2024)
+for a 7B model. This number is below the maximum limit to store token indices as unsigned int (65535), and also a
+multiple of 256 to optimize matrix multiplication calculations.58
+We implemented the following pre-processing steps (with reverse operations included in the post-processing part of the
+tokenizer decoder):
+1. NFC unicode normalization
+2. Removal of control characters \r and\x00.
+3. Addition of a space not only at the start of a string, but also after a set of characters that usually mark the start
+of sentence, when they are followed by an alpha-numeric character or space: \n,\t,(,[,{,/,<,’,’,",«,“,
+‘,‚,‹,—,–,—.
+There were also constraints imposed on the tokens:
+58Seehttps://www.thonking.ai/p/what-shapes-do-matrix-multiplications .
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+• Digits are always isolated (123456 is always tokenized as1|2|3|4|5|6).
+• Punctuation marks are always separated from alphabetic characters.
+• Strings of consecutive spaces up to a fixed arbitrary value are included (from 1 to 8 whitespace characters,
+from 1 to 4 for tabulations, and from 1 to 2 for carriage returns).
+In order to evaluate the quality of the tokenizer, we compared the fertility (average number of tokens per word) of the
+Lucie tokenizer with the tokenizers of popular LLMs, on subsets of text samples from:
+• Wikipedia (a set of samples distinct from those used to train the Lucie tokenizer)
+• Gutenberg (books)
+• Europarl (proceedings of the European Parliament)
+Results are presented in Figure 7 for the different languages modeled by Lucie-7B. Note that fertility is usually lower
+on Europarl: this is due to (1) long words that are represented by a single token ( e.g., “commission,” “européenne,”
+“politique,” “monsieur,” “président,” “parlement,” and “également” in French) and (2) the fact that there are very few
+numbers written with digits (given that most tokenizers decompose numbers into isolated digits, fertility is especially
+high on numbers). The empirical results show that the Lucie tokenizer is competitive in terms of fertility with the
+tokenizers of other state-of-the-art LLMs. The only tokenizers that exhibit lower fertility on natural languages are those
+of Bloom and Gemma, but these tokenizers have the advantage of larger vocabulary sizes (250k and 256k respectively).
+Fertility should be compared for tokenizers that have equal or comparable vocabulary sizes. On programming languages,
+tokenizers that can treat many spaces as a unique token have an advantage in terms of fertility (which does not
+necessarily entail that the LLM built on the tokenizer will offer a better representation of code samples): this is the case
+of the GPT-4, Gemma, Bloom and Falcon tokenizers, which all show better fertility than the Lucie tokenizer on popular
+programming languages. Finally, note that fertility is on the order of 1.5 tokens per word for natural languages, and 4.5
+tokens per word for programming languages.
+Figure 7: Evaluation benchmark results of tokenizers, for several languages: English, French, German, Spanish and
+Italian (left), and a few programming languages (right).
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+4.3 Neural network training
+pretraining was carried out in three phases: the main pretraining phase, a phase to extend the context length, and an
+annealing phase in which the model is trained on high-quality data while the learning rate is decreased linearly to zero.
+We describe each of these phases below, but first, we begin with an overview of preliminary studies that guided our
+training choices.
+4.3.1 Preliminary studies
+Before officially launching the pretraining of Lucie-7B in August 2024, we conducted a number of preliminary studies
+whose results guided the choices made in the final scripts released with the Lucie models and dataset. We began
+in the spring of 2024 by examining state-of-the-art technical reports available at that time, in particular the Bloom
+paper (Le Scao et al., 2023), website and technical reports 59 and the Llama 3.1 technical report (Grattafiori et al., 2024).
+We then conducted a variety of experiments to select the training framework, parallelism configuration and optimal
+batch size for our training environment on Jean Zay.
+Choosing the right distributed training framework for Jean-Zay. We implemented and compared preliminary
+versions of training scripts based on several libraries, in particular FSDP, DeepSpeed, and Megatron-DeepSpeed,
+adapted to the Jean Zay cluster. Performance results obtained with FSDP and DeepSpeed, measured relative to select
+hyper-paremeters (context length, number of nodes, etc.), 60 indicated that DeepSpeed outperformed FSDP in our case.
+Simultaneous experiments with a fork of Megatron-DeepSpeed showed this library to exhibit relatively comparable
+performances with DeepSpeed.61 Given the fact that Megatron-DeepSpeed had already been used in other available
+LLM training projects on Jean Zay, in particular Bloom and CroissantLLM, we chose to follow suit and use it for our
+pretraining. Because Lucie-7B training was carried out on the new H100 partition of Jean Zay, training scripts and
+slurm parameters released on GitHub are adapted to the hardware characteristics of the H100 partition of the Jean Zay
+cluster as of November 2024.
+Choosing the best parallelism configuration. We employed 3D parallelism, where the model is sharded across
+tensors (Tensor Parallelism, TP) and layers (Pipeline Parallelism, PP), with the same configuration replicated across the
+remaining GPUs (Data Parallelism, DP). The value for Data Parallelism is given byDP = T P×P P
+nGPUs
+.
+The optimal choice of TP and PP values depends on hardware factors such as inter-node connectivity and other system
+characteristics. Through experimentation with various parallelism configurations, we observed that certain options fail
+to achieve optimal training speed. To identify the best configuration, we performed several small-scale training runs on
+varying numbers of A100 80GB GPUs, testing different parallelism configurations with global batch sizes (GBS) of
+192 and 512. For each configuration, we selected the micro-batch size (per GPU batch size) as the largest possible value
+that avoids out-of-memory errors.
+To test pure data parallelism, we used ZeRO Optimizer Stage 1, enabling the training model to fit on a single GPU. In
+ZeRO Optimizer Stage 1, the optimizer state is sharded across GPUs, which frees up GPU memory. Table 7 summarizes
+the configurations used in these experiments. The results in Figure 8 demonstrate that training speed with pure data
+parallelism (using ZeRO Optimizer Stage 1) is significantly suboptimal. Conversely, sharding the model across all
+GPUs without sharding the optimizer state improves training speed. We observed that the best training performance is
+achieved with a balanced configuration with equivalent TP and PP sizes. In Figure 8, we can see that setting TP and PP
+to 2 increases training speed. Based on these observations, we used TP and PP of size 4 for pretraining on H100 GPUs.
+Ramp up batch size as a trade-off between high throughput and convergence speed. From Figure 8, we can see
+that a larger batch size brings higher training speed. However, we also observed that larger batch sizes slow down the
+convergence of training loss. Figure 9 shows that with the same data and configuration, a higher batch size (512) results
+in faster training speed but poorer convergence, whereas a batch size of 192 converges better but slows down training
+speed. As a trade-off, we use Rampup Batch Size, where the batch size starts at 256 and linearly increases to 1024, with
+increments of 64 over 10M samples.
+59https://github.com/bigscience-workshop
+60https://gitlab.inria.fr/synalp/plm4all/-/blob/clean/pretraining/deepspeed/eval.md
+61https://gitlab.inria.fr/synalp/plm4all/-/tree/clean/pretraining/megatronDS?ref_type=heads
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Table 7: Configurations tested during small-scale training to identify the optimal parallelism strategy. GBS and MBS
+stands for Global Batch Size and Micro Batch Size respectively. TP and PP stand for Tensor Parallelismand Pipeline
+Parallelism, respectively.
+nGPUs TP=1, PP=1 TP=2, PP=1 TP=1, PP=2 TP=2, PP=2
+GBS MBS GBS MBS GBS MBS GBS MBS
+8 GPUs 512 2 512 4 512 2 512 4
+192 3 192 4 192 2 192 6
+16 GPUs 512 2 512 4 512 4 512 4
+192 3 192 4 192 4 192 6
+32 GPUs 512 2 512 4 512 4 512 4
+192 3 192 4 192 4 192 6
+64 GPUs 512 2 512 4 512 4 512 4
+192 3 192 4 192 4 192 6
+128 GPUs 512 2 512 4 512 4 512 4
+256 2 192 3 192 4 192 6
+b192 b512
+8 16 32 64 128 8 16 32 64 128
+50000
+100000
+150000
+200000
+GPUs
+Tokens/s
+ZeRO Stage
+z0
+z1
+Parallelism
+TP=1,PP=1,DP=[8,16,32,64,128]
+TP=1,PP=2,DP=[4,8,16,32,64]
+TP=2,PP=1,DP=[4,8,16,32,64]
+TP=2,PP=2,DP=[2,4,8,16,32]
+Figure 8: Training speed (tokens per second) as a function of the number of GPUs for different parallelism configurations,
+with batch sizes of 192 and 512. ZeRO Stage 1 was used to test pure Data Parallelism.
+4.3.2 Main pretraining phase
+The main pretraining phase used 512 H100 80GB GPUs for about 500 000 GPU hours on the Jean Zay supercomputer.
+The initial composition of the training data is shown in Figure 5. As explained in Section 3, some of the datasets were
+upsampled to balance the training data distribution yielding the composition for training shown in Figure 6, used in this
+first phase of Lucie-7B pretraining.
+Training hyperparameters, used in torch/Megatron-DeepSpeed, are listed in Table 8.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+0 250 500 750
+Training time (s)
+Loss
+batch b192 b512
+Figure 9: The convergence of training loss as a function of batch size, using TP=2 and PP=2 without optimizer sharding.
+This setup matches the parallelism configuration that achieved the highest training speed in Figure 8.
+Table 8: Hyperparameters of Lucie-7B training optimization, during the first main pretraining phase.
+Hyperparameter Value
+Total # samples (sequences of length 4 096) 762M
+Total # tokens 3.1T
+Total # steps 753 851
+Context length 4 096
+RoPEθ 500k
+Initial Batch size 256
+Final Batch size 1 024
+Batch size rampup by steps of 64 over 10M samples
+Learning rate schedule warmup (2M samples) + cosine annealing
+Maximum Learning rate 3e-4
+Final Learning rate 3e-5
+Weight decay 0.1
+Dropout 0
+Gradient clipping 1
+Initializer range 0.009
+Optimizer AdamW ( β1=0.9,β2=0.95,ϵ=1e-5)
+Precision bfloat16
+Tensor Parallelism (with 512 GPUs) 4
+Pipeline Parallelism (with 512 GPUs) 4
+Data Parallelism (with 512 GPUs) 32
+4.3.3 Context length extension
+In order to better accommodate use cases involving tasks like summarization or retrieval augmented generation (RAG),
+we decided to extend the context length of Lucie-7B to 32,000 tokens. Fu et al. (2024) argue that LLMs are already
+predisposed to handle context sizes beyond the size of their training sequences and that this capacity can be confirmed
+through lightweight continual pretraining following the main pretraining phase. The important thing is that the overall
+domain proportions present in the pretraining data be respected during the context length extension phase. That is,
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+while one might think that it is a good idea to focus on long documents during the extension phase, this can lead to
+an overrepresentation of certain kinds of documents, like books, that then skew the LLM’s probability distribution in
+undersirable ways. Their approach is to keep domain-level proportions constant but to upsample long documents within
+a given domain.
+In line with this approach, we divided the documents of each of our datasets into two categories: documents containing
+4096 tokens or fewer and documents containing more than 4096 tokens. We then upsampled the longer documents
+within each category by a factor of 10 and continued training for 5 billion tokens. During this phase, we decided to
+further clean certain datasets that were used in pretraining. This led to the version 1.2 of the Lucie Training Dataset
+described in Section 3.3.
+Training hyperparameters are the same as during the first pretraining phase (Table 8), except for the ones mentioned in
+Table 9.
+Table 9: Hyperparameters of Lucie-7B training optimization, during the second phase of context length extension.
+Hyperparameter Value
+Total # samples 156 250
+Total # tokens 5B
+Total # steps 1 220
+Context length 32 000
+RoPEθ 20M
+Batch size 128
+Learning rate 2e-5
+Learning rate schedule constant
+Tensor Parallelism (with 128 GPUs) 4
+Pipeline Parallelism (with 128 GPUs) 4
+Data Parallelism (with 128 GPUs) 8
+4.3.4 Annealing with high-quality data
+We finished the pretraining with an annealing phase, focusing on high-quality datasets in order to boost the model’s
+performance. The hyperparameters used during this phase were the same as during the context extension phase (see
+Table 9), except for the learning rate schedule, which was linearly annealed from 3e − 5 to 0.
+During the annealing phase, we adjusted the data mix presented in Figure 6, and put more emphasis on high-quality
+and math-related datasets. We monitored the performance with evaluation on the GSM8K (Grade School Math 8K)
+benchmark, following Grattafiori et al. (2024).
+We introduced four new datasets during this phase:
+• OpenWebMath. 62 A filtered subset of Common Crawl focusing on math-related datasets. This replaced the
+general web datasets from the earlier training phases.
+• StackMathQA. 63 A curated dataset extracted from Stack Exchange sites. It includes 2 million question-answer
+pairs.
+• Flan v2. 64 We followed OLMO 2 preprocessing (Groeneveld et al., 2024) but expanded the dataset size, using
+50 times more data samples.
+• Aya Collection. 65 A multilingual dataset containing human-made instructions in multiple languages, translated
+instruction datasets and new templated datasets in multiple languages (Singh et al., 2024).
+To identify the optimal data mix, we performed a brief ablation study testing two main parameters:
+• Number of training tokens. We compared two configurations with 40M and 5B training tokens.
+62https://huggingface.co/datasets/open-web-math/open-web-math
+63https://huggingface.co/datasets/math-ai/StackMathQA
+64https://huggingface.co/datasets/Open-Orca/FLAN
+65https://huggingface.co/datasets/CohereForAI/aya_collection
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+• Data mix proportions. We tested four data mixes for the 40M training token configuration and six data mixes
+for the 5B configuration.
+Our results indicated that the best strategy was to use more math-related datasets and to introduce the Flan v2 dataset.
+The final data mix proportions are detailed in Table 10.
+Figure 10 illustrates the GSM8K metric performance for the three pretraining phases. The accuracy improves significantly from 8.4% after the initial phase (6.7% after the context extension phase) to 23.5% after the annealing phase.
+However, these scores remain lower than state-of-the-art models suggesting a lack of math-related data in our training
+dataset.
+Table 10: Final data mix used during the annealing phase.
+Dataset Languages Proportion
+OpenWebMath en 0.2
+Pes2o en 0.1
+MathPile en 0.25
+StackMathQA en 0.05
+Flan v2 en 0.2
+Wikipedia en, fr, es, it, de 0.1
+Aya Collection fr, es, it, de 0.1
+Figure 10: Evolution of GSM8K metric for each stage.
+4.4 Environmental impact
+When assessing the environmental impact of an AI model, it is essential to consider both the training phase and
+subsequent inference costs. While the training phase is the most resource-intensive, the inference phase can have a
+greater overall impact once applications built on the model achieve widespread adoption. We thus provide information
+on both phases here.
+Training Phase. As the Jean Zay supercomputer is located in France, it runs on low-carbon nuclear electricity. Our
+primary training took place between September and December 2024, during a period of low water stress, when the
+French energy mix was not reliant on Germany, where electricity production is not carbon-free. CNRS/IDRIS has
+implemented a waste heat recovery system that provides heating for all buildings on the Saclay Plateau. The Power
+Usage Effectiveness (PUE) for the H100 partition is 1.21. According to GENCI, the carbon footprint coefficient for this
+H100 partition is 25.7 g CO2-eq per GPU-hour. Given that our training consumed 500,000 GPU hours, this results in a
+total carbon footprint of 12.85 metric tons of CO2 equivalent—compared to 31.22 metric tons CO2-eq for LLaMA 2 7B
+or 390 metric tons CO2-eq for LLaMA 3 8B.
+Inference Phase. We currently do not have quantified data on the electricity consumption of an inference infrastructure
+based on Lucie 7B, using vLLM, for example. However, several key points should be noted:
+• Smaller models are less energy-intensive as they require fewer GPU and memory resources.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+• Quantized versions of the instruct models are available and can run on most desktop PCs without a GPU using
+tools like Ollama.
+For our initial commercial deployments, we have partnered with Exaion, a company that offers an infrastructure based
+on recycled A4000 GPUs.
+4.5 Evaluation
+4.5.1 Convergence and learning curves
+Figure 11 shows the convergence curve of Lucie-7B; that is, the evolution of the training loss during the three pretraining
+phases. We did not observe any instability during training, nor did we need to intervene at any point. The training loss
+curve during the main training phase, along with the trends in Figures 12,13,14, suggests that the model continued to
+benefit from training even after processing 3T tokens. This indicates that further training could have led to additional
+performance improvements.
+Figure 11: Convergence curve of Lucie-7B: evolution of training loss during the three pretraining phases.
+4.5.2 Benchmark evaluations
+We evaluate Lucie-7B on a variety of well-known LLM benchmarks designed to target different types of LLM skills.
+We include not only results for the final Lucie-7B model after annealing but also results for intermediate checkpoints,
+measured every 25,000 steps (approximately every 100 billion tokens) during the pretraining phase.
+Selected benchmarks. We use Eleuther AI’s lm-eval-harness library for evaluation (Sutawika et al., 2024)66 and
+select three main categories of benchmarks to assess Lucie-7B’s capacities.
+• The Hugging Face Open LLM Leaderboard. 67 An English benchmark for diverse tasks that includes: ARC
+Challenge (Clark et al., 2018), HellaSwag (Zellers et al., 2019), MMLU (Hendrycks et al., 2021), WinoGrande
+(Sakaguchi et al., 2021), GSM8k (Lin et al., 2022), and TruthFulQA (Lin et al., 2022). Notably, for MMLU,
+we evaluate using two formats: the classic approach of predicting the index letter and the “continuation”
+approach, where we use the full answer as the target. The continuation format is less abstract and benefits
+early-stage checkpoints. Results for these tasks, including both configurations of MMLU, are shown in Figure
+12.
+66https://github.com/EleutherAI/lm-evaluation-harness/tree/main
+67https://huggingface.co/spaces/open-llm-leaderboard-old/open_llm_leaderboard
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+• FrenchBench. A French benchmark introduced in Faysse et al. (2024) comprising multiple tasks designed
+to evaluate different aspects of performance in French. In this section, we focus on four tasks from the
+FrenchBench Multiple Choice suite: French Language Test (covering grammar and vocabulary), French
+Hellaswag, and French ARC-Challenge. For each of these tasks, we use 5 few-shot examples to assess model
+performance. Results for these tasks are shown in Figure 13.
+• Multilingual ARC Challenge. Introduced in Lai et al. (2023), this benchmark includes translated versions
+of the ARC Challenge in several languages. We focus on evaluating model performance in four non-English
+languages from the Lucie-7B pretraining corpus: French, Spanish, German, and Italian. For consistency with
+the English ARC Challenge leaderboard, we use 25 few-shot examples for these evaluations. Results for these
+tasks are shown in Figure 14.
+Comparison models. We compare Lucie-7B checkpoints and the final Lucie-7B pretrained model after annealing
+with five other open-weight foundation models of similar parameter size (around 7 billion parameters). We also add
+CroissantLLM, a much smaller model, due to the fact that its datamix is the closest to that of Lucie-7B and it was
+trained on a similar quanity of tokens.68
+• Llama-2-7B (Touvron et al., 2023). This is the second iteration of the Llama foundation models and was
+trained on roughly 2 trillion tokens. We include it in our comparisons because its architecture and size are very
+similar to that of the more recent Llama-3.1-8B but it was trained on far fewer tokens, offering an idea of how
+dataset size can impact performance.
+• Llama-3.1-8B (Grattafiori et al., 2024). This is the latest iteration of the Llama series from Meta, trained
+on 15 trillion tokens. It contains slightly more parameters than that of Llama-2-7B, mainly due to a larger
+vocabulary size of 128,000 tokens. We include it due to its state of the art performance.
+• Mistral-7B (Jiang et al., 2023). We are unaware of the size or composition of the Mistral-7B training set. We
+include it as an example of a strong model also coming out of France.
+• Bloom-7B (Le Scao et al., 2023). An early major contribution to efforts to create fully open LLMs, Bloom-7B
+is a massively multilingual model. As it was trained on only 300 billion tokens, comparison with this model
+also provides an idea of the impact of dataset size.
+• Falcon-7B (Almazrouei et al., 2023). Falcon-7B is trained on four of the five languages on which Lucie-7B
+was trained, although on only about half the amount of tokens.
+• CroissantLLM (Faysse et al., 2024). Like Lucie-7B, CroissantLLM was trained on equal quantities of French
+and English data and on around 3 trillion tokens. Note that CroissantLLM is a significantly smaller model
+with only 1.3 billion parameters, allowing us to analyze the scalability of Lucie-7B.
+Results. Figures 12, 13 and 14 show how the performance of Lucie-7B evolved on standard benchmarks during
+pretraining. Results exhibit a logarithmic trend and do not reach a plateau, suggesting that the model could benefit from
+extended training.
+Compared to CroissantLLM and Bloom, Lucie-7B is consistently superior across all benchmarks. This underscores
+the scalability of the Lucie-7B model along two key dimensions: model size, when compared to CroissantLLM, and
+training token count, when compared to Bloom.
+While Falcon-7B has a lower token count that Lucie-7B, however, here the comparison is more mixed. Lucie-7B has
+better performance on ARC Challenge for all languages but not on Hellaswag in English or French or on Winogrande
+in English.
+For multilingual benchmarks, the evolution of Lucie-7B’s performance places it on a trajectory with the strongest
+models, Llama-3.1-8B and Mistral-7B, with Lucie-7B even outperforming these models on certain benchmarks.
+On English benchmarks, though, Llama-3.1-8B and Mistral-7B clearly pull ahead. A factor that might have negatively
+impacted Lucie-7B’s performance on English benchmarks is the fact that its training dataset had an equal balance of
+French and English data, but this hypothesis would need to be further explored.
+Lucie-7B’s mathematical reasoning remains a weak point. On GSM8K, a clear performance gap emerges between
+models trained on fewer than 3T tokens and those trained on larger datasets (with the caveat that we are not aware of
+the size of Mistral-7B’s training dataset). As discussed in Section 4.3.4, however, performance on this benchmark was
+improved during the annealing phase by adjusting the data mix to emphasize mathematical content.
+68We note that token comparisons are only approximate due to the fact that each model uses its own tokenizer.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Overall, Lucie is currently more comparable to Llama 2 than Llama 3. This underscores the fact that model performance
+is not only linked to the quantity of pretraining data used, as Llama 2 is trained on fewer tokens than Lucie, but
+also a matter of the nature of the data. A deeper investigation into data mix composition might help improve overall
+performance. In future work, we plan to study how training on equal amounts of French and English data might have
+impacted Lucie’s results on English benchmarks. We will also aim to better understand how the type and quality of
+our French data—our French datasets contain more documents retrieved from OCR for example and less refined web
+data—might have influenced performance.
+Finally, a notable limitation on the benchmarks discussed in this section is that many of them were created by translating
+English datasets, making it challenging to evaluate cultural biases. Addressing this issue will be a key focus of future
+work within the OpenLLM project.
+Figure 12: Evaluation of baseline LLM and Lucie-7B checkpoints on English NLP benchmarks.
+Figure 13: Evaluation of baseline LLM and Lucie-7B checkpoints on French NLP benchmarks.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Figure 14: Evaluation of baseline LLM and Lucie-7B checkpoints on NLP benchmarks in several European languages.
+4.5.3 Needle in a haystack
+To test the efficacy of the context length extension phase, we appealed to the “needle in a haystack” benchmark (Nelson
+et al., 2024), which is designed to evaluate the ability of large language models (LLMs) to retrieve information from a
+long context.
+The benchmark involves placing a short sentence (the “needle”) within a long distractor document (the “haystack”).
+The model is then evaluated on its ability to retrieve the needle within the haystack. The needle is placed at varying
+depths within the haystack, and the haystack’s length is adjusted to represent both short and long contexts.
+We used the implementation from Fu et al. (2024),69 where the needle is the sentence: “The best thing to do in San
+Francisco is eat a sandwich and sit in Dolores Park on a sunny day.” The haystack consists of an excerpt from a Paul
+Graham essay. The model is then prompted with the instruction: “The best thing to do in San Francisco is” and is
+expected to respond with: “eat a sandwich and sit in Dolores Park on a sunny day.”
+Results of this benchmark are shown in Figures 15, 16 and 17. In Figure 15, the model can retrieve information at
+all depths (y-axis) up to a context length of around 4,256 tokens as everything to the left of the white line is green.
+However, the model fails to find the needle in larger contexts, as indicated by the large red region.
+After context extension (Figure 16), the target context length is 32,000 tokens. The model finds the needle up to a
+context length of nearly 34,000 tokens at almost all depths with two exceptions (between the top 10-30% of the haystack
+for a context length of over 32,000) as indicated by the two red-orange squares to the left of the white dashed line. The
+results are even better after annealing, where the model finds the needle at all depths up to 34,000 tokens.
+4.6 Pretrained foundation model release
+Lucie-7B is available on Hugging Face at https://huggingface.co/OpenLLM-France/Lucie-7B . This
+repository also makes available, in revision versions, intermediate checkpoints, after regular training
+steps70. While those checkpoints are in transformers71 format, full checkpoints with optimizer states are
+available in the Megatron-DeepSpeed72/pytorch73 format at https://huggingface.co/OpenLLM-France/
+Lucie-7B-optimizer-states (universal checkpoints) and https://huggingface.co/OpenLLM-France/
+Lucie-7B-optimizer-states-512GPU (original checkpoints with 512-GPU parallelizing).
+The pretrained foundation model Lucie-7B can be loaded and used to infer an answer with the following code. In this
+example, 1-shot prompting is used to answer a question in French (“Quelle est la capitale de la France ?” – “What is the
+capital of France?”).
+69https://github.com/FranxYao/Long-Context-Data-Engineering
+70Checkpoints from the first main pretraining phase are available for training steps: 5 000, 10 000, . . . , 25 000, 50 000, 75 000,
+100 000, . . . , 750 000, 753 851. Checkpoints from the second main pretraining phase are available for training steps: 250, 500, 750,
+1000, 1220.
+71https://huggingface.co/docs/transformers
+72https://github.com/microsoft/Megatron-DeepSpeed
+73https://pytorch.org/
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+1 import transformers
+3 model_name = "OpenLLM-France/Lucie-7B"
+5 tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+6 model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
+7 device_map="auto",
+8 load_in_4bit=True # For efficient inference, if quantization is supported by the GPU card
+9 )
+11 # Wrap the model in a text generation pipeline
+12 pipeline = transformers.pipeline("text-generation", model=model, tokenizer=tokenizer)
+14 generation_kwargs = dict(
+15 num_return_sequences=1, # Number of variants to generate.
+16 return_full_text= False, # Do not include the prompt in the generated text.
+17 do_sample=True,
+18 temperature=1.0, top_p=1, top_k=None, # Sampling parameters.
+19 max_new_tokens=200, # Maximum length for the output text (in number of tokens).
+20 )
+22 # Try 1-shot question answering
+24 prompt = """\
+25 Quelle est la capitale de l'Espagne ? Madrid\n\
+26 Quelle est la capitale de la France ?\
+27 """
+28 completions = pipeline(prompt, **generation_kwargs)
+29 for completion in completions:
+30 print(prompt + " [...]" + completion['generated_text'])
+Quelle est la capitale de l'Espagne ? Madrid
+Quelle est la capitale de la France ? [...] Paris
+Quelle est la capitale de l'Italie? Rome
+Quelle est la capitale de la Grande-Bretagne? Londres
+Quelle est la capitale de la Suisse? Berne
+Quelle est la capitale du Portugal? Lisbonne
+Quelle est la capitale de l'Algérie? Alger
+...
+Figure 15: Effective context window size for Lucie-
+7B after the first phase of pretraining, measured with
+the needle in a haystack method Nelson et al. (2024).
+Figure 16: Effective context window size for Lucie-
+7B after context length extension (2nd phase).
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Figure 17: Effective context window size for Lucie-
+7B after annealing (3rd phase).
+5 After pretraining: Instruction fine-tuning
+A pretrained generative model has learned to predict, when given an input sequence or “prompt,” the most likely next
+word in the sequence. The goal in the pretraining phase is to expose the model to a wide variety of open-ended data so
+that it learns which words tend to occur with which words. For instance, it should learn that red and wine are likely
+to occur together but it should also learn to place lower probability on a co-occurrence of blue and wine. During the
+instruction phase, the point is to guide the model to predict certain types of sequences given certain types of prompts: it
+should provide an answer when asked a question, provide a summary of an input document when requested, provide
+a list when asked for a recipe, and so on. Instruction tuning is a kind of multitask supervised fine-tuning (SFT) in
+which the model is trained on pairs of a variety of input instructions with sample responses. Loss during training for
+instruction tuning can optionally be calculated on both the instruction and response, or only on the assistant’s response.
+While the principal contributions of our project are the Lucie Training Dataset and the Lucie-7B foundation model, we
+decided to also release two instruction-tuned models, Lucie-7B-Instruct-human-data74 and Lucie-7B-Instruct-v1.1.75
+Because they have not learned basic skills like answering questions, it is hard to get a feel for model quality by
+interacting directly with a foundation model. The point of releasing the instruction models was thus to provide an
+illustration of how the base model could be fine-tuned to perform basic tasks with the idea that more complete fine-tuning
+and alignments would follow.
+Lucie-7B-Instruct-human-data is fine-tuned only on human-produced instructions collected either from open annotation
+campaigns or by applying templates to extant datasets, many of which were originally designed for NLP tasks. Lucie-
+7B-Instruct-v1.1 is fine-tuned on a mixture of templated data and synthetic instructions produced by ChatGPT. While
+the former performs less well on certain benchmarks than the latter, the interest of providing a model fine-tuned
+on human-created data is to give an example of what can be done to fine-tune LLMs to follow instructions without
+appealing to third party LLMs.
+5.1 Instruction datasets
+Instructions can be open-ended as in (1) or closed as in (2). They can also include additional input text on which the
+LLM is supposed to base its response as in summarization, information extraction or rephrasing. (Examples taken from
+the Alpaca-cleaned dataset.76)
+(1) Instruction: "Give three tips for staying healthy."
+(2) Instruction: "Find the capital of Spain."
+74https://huggingface.co/OpenLLM-France/Lucie-7B-Instruct-human-data
+75https://huggingface.co/OpenLLM-France/Lucie-7B-Instruct-v1.1 Note that the original release of Lucie-7B was
+accompanied by a model called Lucie-7B-Instruct that was fine-tuned on: Alpaca-cleaned https://huggingface.co/datasets/
+yahma/alpaca-cleaned, Alpaca-cleaned-fr https://huggingface.co/datasets/cmh/alpaca_data_cleaned_fr_52k,
+Magpie-Gemma https://huggingface.co/datasets/Magpie-Align/Magpie-Gemma2-Pro-200K-Filtered , and Wildchat https://huggingface.co/datasets/allenai/WildChat-1M. This model was subsequently replaced by Lucie-7B-
+Instruct-v1.1 due to better benchmark performance.
+76https://huggingface.co/datasets/yahma/alpaca-cleaned
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+(3) Instruction: "Rewrite the following sentence using active voice." ; Input: "The news report was read by the
+captain."
+Selecting instruction datasets is difficult for a variety of reasons. Apart from potential problems of quality, we faced
+two major difficulties. The first was to select datasets that were consistent with our initiative to create fully open-source
+models that depend as little on less open, third party models as possible. Unfortunately, the majority of large-scale
+instruction datasets are generated with models such as ChatGPT or the Llama family. Because the use of such data
+was hard to avoid for large-scale instruction tuning, we made the decision to release two models: one model in
+which we attempted to avoid synthetic data (Lucie-7B-Instruct-human-data) and one that included synthetic data
+(Lucie-7B-Instruct-v1.1).
+The second difficulty was to find instruction data in languages other than English, in particular, French, but also in the
+other natural languages on which Lucie-7B was trained: German, Italian and Spanish. Many non-English datasets are
+simply translations of English datasets, and often, they are automatic translations with little to no quality control. There
+have been serious efforts to create (originally) non-English datasets such as the Aya dataset and the Open Assistant
+dataset, both cited below, but the quantity of data in such corpora remains far smaller than what one can get with
+synthetic data.
+5.1.1 Non-synthetic datasets
+The line that we draw between synthetic and non-synthetic datasets is an imperfect one. Certain datasets, like Dolly,
+might be originally created by humans but then machine-translated into other languages. Other datasets that we have
+listed in the non-synthetic category might employ models for quality control, as in the original Croissant-Aligned data,
+or for automatic templating. The distinction that we wish to make here is one in which large, third party LLMs are
+used to generate responses to instructions (or even the instructions themselves) and those in which the basic content is
+created by humans.
+Aya Dataset
+https://huggingface.co/datasets/CohereForAI/aya_dataset
+The Aya Dataset (Singh et al., 2024) is a multilingual instruction fine-tuning dataset consisting of prompt/instruction
+pairs written by humans in the target language. The data was collected by Cohere For AI 77 via the Aya Annotation
+Platform.78 We selected data for English, French, German, Italian, and Spanish. License: Apache 2.0.
+Croissant Aligned Instruct
+https://huggingface.co/datasets/OpenLLM-France/Croissant-Aligned-Instruct .
+This dataset consists of French-English translation pairs from the CroissantLLM dataset (https://huggingface.co/
+datasets/croissantllm/croissant_dataset_no_web_data/tree/main/aligned_36b). The first sentence
+of each pair is prefixed with an instruction such as “Please translate the following sentence into French”. We used 20K
+examples sampled randomly from 80K total. License: CC BY-SA 4.0.
+Dolly curated
+https://huggingface.co/datasets/argilla/databricks-dolly-15k-curated-multilingual .
+This dataset collection (Ouyang et al., 2022) includes the original databricks-dolly-15k79 dataset created by Databricks
+and consisting of human-generated English instruction/response pairs. It also includes machine-translations in a variety
+of languages. We took the English examples together with the translations for English, French, German and Spanish.
+License: CC BY-SA 3.0.
+ENS
+https://huggingface.co/datasets/Gael540/dataSet_ens_sup_fr-v1.
+The ENS dataset is a French corpus of questions about the French higher education system (e.g., “Quelle est la différence
+entre une université et une grande école ?”) with responses. License: Apache 2.0.
+FLAN v2 Converted
+https://huggingface.co/datasets/ai2-adapt-dev/flan_v2_converted .
+This is a converted version of the FLAN collection (Longpre et al., 2023)80 extracted fromhttps://huggingface.
+co/datasets/Open-Orca/FLAN by the Allen Institute for AI.81 The data is in English. License: CC BY 4.0.
+77https://cohere.com/research
+78https://aya.for.ai/
+79https://huggingface.co/datasets/databricks/databricks-dolly-15k
+80https://github.com/google-research/FLAN/tree/main/flan/v2
+81https://allenai.org/
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Hard-coded prompts: This is a set of customized instructions that provide information about OpenLLM and Lucie.
+The instructions are adapted fromhttps://huggingface.co/datasets/allenai/tulu-3-hard-coded-10x .
+OpenAssistant Conversations 1
+https://huggingface.co/datasets/OpenAssistant/oasst1.
+This dataset (Köpf et al., 2023) is a crowd-sourced, multilingual conversation corpus. We used data in English, French,
+German, Italian and Spanish. License: Apache 2.0.
+Oracle
+https://github.com/opinionscience/InstructionFr/tree/main/wikipedia.
+Oracle is a set of questions and answers based on French Wikipedia articles. It is a subset of InstructionFr, a repository
+of instruction datasets in French designed to finetune LLMs and released by Opsci. License: CC BY-SA.
+PIAF
+https://huggingface.co/datasets/AgentPublic/piaf.
+PIAF is a reading comprehension dataset that includes answers based on pairs of questions and extracts from French
+Wikipedia articles (Keraron et al., 2020). License: MIT.
+5.1.2 Synthetic datasets
+Alpaca-cleaned-fr
+https://huggingface.co/datasets/cmh/alpaca_data_cleaned_fr_52k.
+Alpaca-cleaned-fr (Huang, 2023) is built from the cleaned version of the Stanford Alpaca dataset (Taori et al., 2023) and
+translated into French using gpt-3.5-turbo following the methods provided inhttps://github.com/bofenghuang/
+vigogne/blob/main/docs/data.md. License: CC BY-NC 4.0.
+Open Hermes 2.5
+https://huggingface.co/datasets/teknium/OpenHermes-2.5
+A collection of diverse synthetic instruction datasets in English, totaling 1 million examples. Licenses: Mixed open.
+TULU3 Personas Math
+https://huggingface.co/datasets/allenai/tulu-3-sft-personas-math
+This dataset was created using the personas method in order to improve model capacity to solve complex math word
+problems. License: ODC-BY .
+TULU3 Personas Math Grade
+https://huggingface.co/datasets/allenai/tulu-3-sft-personas-math-grade
+Like Personas Math, this dataset was created using personas with a focus on lower-level math word problems. License:
+ODC-BY .
+Wildchat
+https://huggingface.co/datasets/allenai/WildChat-1M.
+WildChat (Zhao et al., 2024) is a collection of 1 million conversations between human users and ChatGPT. We used the
+French subset. License: ODC-BY .
+5.2 The Instruct models
+When designing the data mix for Lucie-7B-Instruct-human-data, our approach was to use as much good quality human
+and templated data as possible in the five languages on which Lucie-7B was trained. When it came to mixes involving
+synthetic data, however, we tried many combinations before arriving at Lucie-7B-Instruct-v1.1,82 which more than
+doubled the performance on GSM8K of the synthetic mix in second place. Interestingly, it did this while performing as
+well as or even better than the other mixes on French benchmarks despite the very small fraction of French instruction
+data used to train Lucie-7B-Instruct-v1.1.
+5.2.1 Data mixes
+Details on the individual datasets used in each data mix are given in Table 11. Table 12 provides a breakdown of both
+mixes by type of data, synthetic or non-synthetic, and language. The statistics shown are those after two types of
+filtering. First, for the human data mixture, we filtered Aya Dataset, Dolly and Open Assistant to keep only languages
+82Including Lucie-7B-Instruct, which was released simultaneously with Lucie-7B, but has since been replaced by Lucie-7B-
+Instruct-v1.1, as explained in footnote 75.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+on which Lucie-7B was trained. Second, even though the idea of the human data mix was to avoid synthetic data, as
+explained above, the distinction is imperfect and some synthetic data might have slipped through. We thus filtered
+both of our instruction mixes for certain keywords expected for synthetic data; that is, examples containing assistant
+responses were filtered out if the responses contained a keyword from the listfilter_strings in (4). This filter is
+designed to remove examples in which a generated response is presented as being from a model other than Lucie.
+(4) filter_strings = ["OpenAI", "Open AI", "ChatGPT", "Chat GPT", "GPT-3", "GPT3",
+"GPT 3", "GPT-4", "GPT4", "GPT 4", "GPT-3.5", "GPT3.5", "GPT 3.5", "BingChat",
+"Bing Chat", "LAION", "Open Assistant", "OpenAssistant", "BARD", "PaLM", "Gemini",
+"Gemma", "Google AI", "Anthropic", "Claude", "LLaMA", "Meta AI", "Mixtral",
+"Mistral"]
+Table 11: The datasets with number of samples per language used for training Lucie-7B-Instruct-human-data (“humandata”) and Lucie-7B-Instruct-v1.1 (“v1.1”).
+Dataset Language # human-data # v1.1
+Alpaca fr English – 51,655
+Aya Dataset English 3944 –
+French 1422 –
+German 241 –
+Italian 738 –
+Spanish 3854 –
+Dolly curated English 15,015 –
+French 15,015 –
+German 15,015 –
+Spanish 15,015 –
+Croissant Aligned Instruct French-English 20,000 20,000
+ENS French 394 394
+FLAN v2 Converted English 78,580 78,580
+Open Assistant 1 English 21,151 –
+French 1223 –
+German 1515 –
+Italian 370 –
+Spanish 14078 –
+Open Hermes English – 1,000,495
+Oracle French 4613 4613
+Personas Math English – 149,954
+Personas Math Grade English – 49,964
+PIAF French 1849 1849
+WildChat French – 26,436
+Hard-coded prompts English 240 240
+French 240 240
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Table 12: A breakdown of the data mixes for Lucie-7B-Instruct human data (“human-data”) and Lucie-7B-Instruct-v1.1
+(“v1.1”) by category. Synthetic data comes from the datasets listed in Section 5.1.2; non-synethetic from those in 5.1.1.
+Language is determined by the principal language listed for the original dataset.
+Category # human-data # v1.1
+Synthetic – 1,278,504
+Non-synthetic 214,512 105,916
+English 118,930 1,279,233
+French 24,756 85,187
+Translated data 20,000 20,000
+Other (de, es, it) 50,826 –
+5.2.2 Training procedure
+The model architecture and hyperparameters are the same as for Lucie-7B during the annealing phase with two
+exceptions. First, we use a context length of 4096 tokens and a batch size of 1024 (as in the main pretraining phase),
+though we check that the model can still handle context sizes of up to 32,000 tokens (see Section 5.3). Second, we use a
+cosine learning rate scheduler from 3e-5 to 3e-6.
+We use a chat template similar to Llama 3.1:
+<s><|start_header_id|>user<|end_header_id|>
+Donne trois conseils pour rester en bonne santé.
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+1. Mangez une alimentation équilibrée et assurez-vous d'inclure beaucoup de fruits
+et légumes.
+2. Faites de l'exercice régulièrement pour maintenir votre corps actif et fort.
+3. Dormez suffisamment et maintenez un horaire de sommeil régulier.
+<|eot_id|>
+As such, we introduce three new special tokens:
+• <|start_header_id|> and<|end_header_id|>: These tokens circumscribe the role of the speaker, which
+can either be: system, user or assistant.
+• <|eot_id|>: This token marks the end of a turn in the conversation.
+Unlike the pretraining phase, we do not use data packing. Instead, each sample is truncated or padded to a fixed length
+of 4096 tokens. Additionally, gradient descent is applied only to the assistant’s responses.
+5.3 Evaluation
+5.3.1 Benchmark evaluations
+We evaluate the instruction models on the same categories of benchmarks detailed in Section 4.5.2. We also add results
+for French generative benchmarks from Faysse et al. (2024): FQuad, a French Question Answering dataset containing
+manually annotated sets of Wikipedia passages (FQuADGenQ and MultiFQuAD); OrangeSum, 83 a summarization
+dataset of French news articles; and French Trivia, 84 a dataset containing questions on French culture, written in
+English.
+Results for the Lucie instruct models are given in Figures 18, 19, 20 and 21. We add Lucie-7B (after annealing),
+Llama-2-7B-Instruct, Llama-3-8B-Instruct and Mistral-7B-Instruct for comparison.
+83https://huggingface.co/datasets/EdinburghNLP/orange_sum
+84https://huggingface.co/datasets/manu/french-trivia
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+The biggest improvement, at least for Lucie-7B-Instruct-v1.1, comes on GSM8K, where we see a nearly 20 point
+increase relative to Lucie-7B after annealing, Llama-2-7B-Instruct and also Lucie-7B-Instruct-human-data. While
+results still fall below that of Llama-3-8B-Instruct, Lucie’s performance is comparable to Mistral-7B-Instruct.
+Interestingly, Lucie-7B-Instruct-v1.1 manages to keep the relatively strong performance of Lucie-7B on French
+benchmarks despite being trained on very little French instruction data (around 6%). While slightly outperforming
+Lucie-7B-Instruct-human-data on some generative benchmarks, the two Lucie instruct models are roughly equivalent in
+multilingual performance.
+Results on English benchmarks still fall clearly below the state of the art. Here again, future work will involve looking
+at how dataset composition impacts this performance, but given the gap already present for the pretrained models, the
+discrepancy between the Lucie instruct models and other comparison models likely stems from the pretraining stage.
+Figure 18: Comparative results of the Lucie instruct models on English NLP benchmarks.
+Figure 19: Comparative results of the Lucie instruct models on French multi-choices benchmarks.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Figure 20: Comparative results of the Lucie instruct models on French generative benchmarks.
+Figure 21: Comparative results of the Lucie instruct models on multilingual benchmarks.
+5.4 Needle in a haystack
+Evaluation of Lucie-7B-Instruct-human-data on the “Needle in the Haystack” benchmark (see Section 4.5.3) shows no
+loss on context window sizes up to 32,000 tokens compared to the pretrained model. The window falls considerably, to
+22,000 tokens, for Lucie-7B-Instruct-v1.1, however. We suspect that this reduction can be attributed to the fact that
+Lucie-7B-Instruct-v1.1 is trained on significantly more data than Lucie-7B-Instruct-human-data and that instruction
+fine-tuning was carried out, for both models, on sequences of 4096 tokens. 85 The results are shown in Figures 22
+and 23.
+Figure 22: Needle in a haystack results on Lucie-7B-
+Instruct human-data.
+Figure 23: Needle in a haystack results on Lucie-7B-
+Instruct-v1.1.
+85We note that the original Lucie-7B-Instruct model maintained a context window length of 32,000 tokens even though it, too, was
+trained on sequences of 4096 tokens. It was trained on about a quarter of the data of Lucie-7B-Instruct-v1.1.
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+The reduction in context window size exhibited by Lucie-7B-Instruct-v1.1 underscores the need for fine-tuning and
+alignment of the Lucie-7B foundation model with datasets including longer training sequences. As the point of the first
+instruct models was to provide preliminary illustrations of Lucie-7B’s potential, we leave such training for future work.
+6 Conclusion
+We publicly release the Lucie Training Dataset and the Lucie-7B family of LLMs in an effort to demonstrate the
+feasibility, and better understand the impact, of making best efforts to comply with regulation and move away from
+US-centric biases when selecting data and training a new sovereign LLM from scratch. The Lucie Training Dataset is
+particularly well adapted to French use cases, containing nearly 600 billion words in French from a variety of documents
+with unrestrictive licenses, but also contains data in English, German, Italian, Spanish and code. Lucie-7B was trained
+on equal amounts of English and French data to offset biases introduced by training on English-heavy datasets. After
+going through a context length extension phrase during pretraining, the model has a context length of 32,000 tokens. To
+improve its performance on selected benchmarks, we carried out at the very end of training an annealing phase in which
+we added high quality data focused on math and natural language processing tasks from FLAN v2. We note however
+that, although this annealing phase clearly improves mathematical reasoning, it may have been better to focus more on
+math and code earlier on in the training process. We could likely also benefit from the use of more data, as well as the
+use of reasoning elicitation approaches such as long chain-of-thought fine-tuning.
+While our principal focus has been on the training dataset and foundation model, we also release two instruction tuned
+models as illustrations of how the model can behave with simple fine-tuning. We publish two versions: one version
+containing only data templated or otherwise created by humans and one version containing synthetic data produced by
+ChatGPT. In the coming months our focus will turn to aligning Lucie-7B with preference data to further improve the
+model’s behavior and adapt it to an educational context.
+7 Acknowledgements
+This work was performed using HPC resources from GENCI–IDRIS (Grant 2024-GC011015444). We gratefully
+acknowledge funding support from GENCI and IDRIS and from Pierre-François Lavallée (IDRIS) and Stephane
+Requena (GENCI) in particular.
+We also thank the support teams from IDRIS, in particular Myriam Peyrounette and Hatim Bourfoune, and from
+Hugging Face, in particular Thomas Wolf, Guilherme Penedo, Elie Bakouch, Haojun Zhao, and Lucain Pouget for their
+technical guidance throught the project.
+Dataset
+The Lucie Training Dataset was created by members of LINAGORA (Olivier Gouvert, Julie Hunter, Jérôme Louradour,
+Jean-Pierre Lorré) and the OpenLLM-France community.
+We thank in particular Rachel Bawden (INRIA), Clément Bénesse (Opsci), Christophe Cérisara (LORIA), Olivier Ferret
+(CEA List), Joöl Gombin (Opsci), Ismaïl Harrando (LINAGORA), Jordan Ricker (Opsci), Guokan Shang (MBZUAI),
+and Yaya Sy (LORIA) for their helpful input.
+Tokenizer
+The Lucie tokenizer was trained by Jérôme Louradour (LINAGORA) with input from (in alphabetical order): Rachel
+Bawden (INRIA), Christophe Cerisara (LORIA), Evan Dufraisse (CEA List), Manuel Faysse (ILLUIN Technology),
+Ismaïl Harrando (LINAGORA/SciencesPo), Julie Hunter (LINAGORA), Jean-Pierre Lorré (LINAGORA), Michel-
+Marie Maudet (LINAGORA), Guokan Shang (MBZUAI), and Yaya Sy (LORIA).
+Lucie-7B
+Lucie-7B was created by members of LINAGORA and the OpenLLM-France community, including in alphabetical
+order: Thibaut Boissin (IRT), Christophe Cerisara (LORIA), Evan Dufraisse (CEA List), Olivier Gouvert (LINAGORA),
+Lucas Hervier (IRT), Julie Hunter (LINAGORA), Jean-Pierre Lorré (LINAGORA), Jérôme Louradour (LINAGORA),
+Michel-Marie Maudet (LINAGORA), Agustin Martin Picard (IRT) and Yaya Sy (LORIA).
+We thank Rachel Bawden (INRIA), Clément Bénesse (Opsci), Manuel Faysse (ILLUIN Technology), Olivier Ferret
+(CEA List), Joël Gombin (Opsci), Ismaïl Harrando (LINAGORA/SciencesPo), Jordan Ricker (Opsci), Guokan Shang
+(MBZUAI), and Julien Tourille (CEA List) for their helpful input.
+Lucie instruct models
+
+The Lucie-7B LLM and the Lucie Training Dataset: Open resources for multilingual language generation
+Lucie-7B was created by members of LINAGORA and the OpenLLM-France community, including in alphabetical
+order: Olivier Gouvert (LINAGORA), Ismaïl Harrando (LINAGORA/SciencesPo), Julie Hunter (LINAGORA), Jean-
+Pierre Lorré (LINAGORA), Jérôme Louradour (LINAGORA), Michel-Marie Maudet (LINAGORA), and Laura Rivière
+(LINAGORA).
+We thank Clément Bénesse (Opsci), Christophe Cerisara (LORIA), Evan Dufraisse (CEA List), Olivier Ferret (CEA
+List), Joël Gombin (Opsci), Émile Hazard (Opsci), Jordan Ricker (Opsci) and Guokan Shang (MBZUAI), and for their
+helpful input.
+Finally, we thank the entire OpenLLM-France community, whose members have helped in diverse ways.

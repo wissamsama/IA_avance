@@ -1,0 +1,48 @@
+FAISS (Facebook AI Similarity Search) is an open-source library developed by Meta for efficient similarity search and clustering of dense vectors. It is designed to handle datasets ranging from a few million to over a billion high-dimensional vectors, making it a backbone for modern recommendation systems, search engines and AI applications.
+With the explosion of data in fields like e-commerce, computer vision and NLP, the need to quickly find similar items in massive, high-dimensional datasets is crucial. FAISS addresses this challenge by providing highly optimized algorithms and data structures for nearest neighbor search and clustering. It uses both CPUs and GPUs for maximum performance.
+IndexFlatL2: Brute-Force Exact Search
+IndexFlatL2 is the main Indexing Approaches in FAISS. It stores all vectors in memory and performs a brute-force search to find the nearest neighbors using the Euclidean distance. It is best for small to medium datasets where exact results are required and computational resources are sufficient. It helps in:
+- Returning the exact nearest neighbors.
+- Simple to implement and use.
+But it is not scalable for very large datasets like hundreds of millions or billions of vectors due to high memory and computation requirements.
+Now lets see how to use FAISS for our projects.
+1. Installing FAISS and using Dataset
+You can install FAISS library using following command:
+!pip install faiss-cpu
+Now lets create a database of 100,000 random 128-dimensional vectors and builds a FAISS index for efficient similarity search. It then finds the top 5 nearest neighbors from the database for each of 10 random query vectors using Euclidean distance where:
+- d is the number of features per vector like 128.
+- nb is the number of vectors in your database.
+- nq is the number of query vectors you want to search.
+- xb and xq are random float32 arrays simulating your database and queries.
+import faiss
+import numpy as np
+d = 128
+nb = 100000
+nq = 10
+xb = np.random.random((nb, d)).astype('float32')
+xq = np.random.random((nq, d)).astype('float32')
+2. Building Index
+- IndexFlatL2 is the simplest FAISS index, performing brute-force search.
+- It does not require training just initialize it with the vector dimension.
+index = faiss.IndexFlatL2(d)
+3. Add Vectors to the Index
+- This step loads all your database vectors into the index for searching.
+- Each vector is stored in the order added.
+- IDs are assigned as their position in the array.
+index.add(xb)
+4. Search for Nearest Neighbors
+- For each query vector in xq, FAISS computes the L2 distance to every vector in the database.
+- D contains the distances to the top-5 nearest neighbors for each query.
+- I contains the indices (IDs) of those nearest neighbors.
+D, I = index.search(xq, k=5)
+5. Displaying Search Results
+print("Distances (D):")
+display(D)
+print("\nIndices (I):")
+display(I)
+Output:
+- After running the search it will give you the indices of the 5 most similar vectors in your database for each query.
+- Later these indices are used to retrieve the original vectors or associated metadata.
+- IndexFlatL2 is extremely accurate because it exhaustively compares each query to all database vectors but it can be slow and memory-intensive for very large datasets.
+- For even larger datasets, FAISS offers scalable alternatives like IndexIVF and quantization-based methods to speed up search at the cost of some accuracy.
+- Euclidean distance is the default metric and for normalized vectors, it is closely related to cosine similarity making it suitable for many embedding-based applications.

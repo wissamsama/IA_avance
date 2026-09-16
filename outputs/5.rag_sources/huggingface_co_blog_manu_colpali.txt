@@ -1,0 +1,58 @@
+ColPali: Efficient Document Retrieval with Vision Language Models 👀
+Using Vision LLMs + late interaction to improve document retrieval (RAG, search engines, etc.), solely using the image representation of document pages (paper)!
+Context
+To improve the query answering capabilities of LLMs, it is often best to first search for information online or in external document sets (PDFs), before letting a LLM synthetize a grounded response (RAG). In practice, these retrieval pipelines for PDF documents have a huge impact on performance but are non-trivial...
+- Run Optical Character Recognition (OCR) on scanned PDFs
+- Run Document Layout Detection models to segment pages into paragraphs, figures, titles
+- Reconstruct the structure and the reading order of the page
+- Optionally, use resource intensive specialized models to caption figures, images and tables in natural language
+- Use a chunking strategy to split or merge text passages in a coherent way
+- Use a strong neural embedding model (BGE M3) to map text chunks to a semantically meaningful vector space
+- Store the vector index to be used for future retrieval
+Although tools exist to facilitate this pipeline (Unstructured, Surya), the whole indexing process can be slow, tends to propagate errors, and struggles to take into account the more visual elements of a page (tables, figures, images but also fonts, etc..).
+Our concept ? Just embed the page image directly !
+In practice, it’s not as easy as we just made it sound ! Our method, ColPali is enabled by the latest advances in Vision Language Models, notably the PaliGemma model from the Google Zürich team, and leverages multi-vector retrieval through late interaction mechanisms as proposed in ColBERT by Omar Khattab.
+Let’s break it down, with more technical details !
+Model Architecture
+Many retrieval systems can be broken down into two parts.
+- In the indexing phase, all the documents from the corpus are indexed in an offline fashion.
+- In the querying phase, a user query is matched with a low latency to the pre-computed document index.
+Important requirements for efficient retrieval systems are thus (R1) good retrieving performance, (R2) reasonable indexing speeds, (R3) low latency during querying.
+During indexing, standard “bi-encoder” neural retrieval systems first parse documents to extract semantically coherent text passages, then map them to a dense vector space that aims to represent the text’s semantic meaning, and store the resulting “embeddings”. During querying, the query is converted into its dense vector representation and the document passage vectors with the biggest cosine similarity can be retrieved with a low latency.
+Our method ColPali is a bit different !
+During indexing, we aim to strip away a lot of the complexity by using images (“screenshots”) of the document pages directly.
+A Vision LLM (PaliGemma-3B) encodes the image by splitting it into a series of patches, which are fed to a vision transformer (SigLIP-So400m). These patch embeddings are linearly projected and inputted as “soft” tokens to a language model (Gemma 2B), in order to obtain high-quality contextualized patch embeddings in the language model space, which we then project to a lower dimension (D=128) for more efficient storage. We thus construct and store a multi-vector document representation for each page image.
+During runtime querying, a user query is embedded by the language model, to obtain token embeddings. We are able to run a ColBERT-style “late interaction” (LI) operation to efficiently match query tokens to document patches. To compute a LI(query, document) score, for each term in the query, we search for the document patch that has the most similar ColPali representation. We then sum the scores of the most similar patches for all terms of the query, to obtain the final query-document score. Intuitively, this late-interaction operation allows for a rich interaction between all terms of the query and document patches, all the while benefiting from the fast matching and offline computation offloading that more standard (bi-encoder) embedding models enable.
+With ColPali, we thus benefit from fast indexing speeds (R2) without significantly impacting querying latencies (R3) ! But what about performance (R1)?
+ViDoRe
+Although awesome benchmarks exist to evaluate text embedding models, we find that in many practical use cases, the prior document ingestion pipeline matters much more than the embedding model itself ! While documents often rely on visual elements to more efficiently convey information to human readers, text-only systems barely tap into these visual cues. To our knowledge, no benchmark evaluates document retrieval methods by considering both textual and visual document features like a human would.
+To this end, we introduce ViDoRe, the Visual Document Retrieval Benchmark, to assess retrievers on their capacity to retrieve visually rich information in docs, with tasks spanning various topics, modalities (figures, tables, text), and languages !
+ViDoRe is linked to a HF leaderboard https://huggingface.co/spaces/vidore/vidore-leaderboard and we hope to see many models trying out this new "Retrieving in Vision Space" paradigm !
+Results
+Training details
+We initialize the Vision Language Model backbone using pretrained weights from PaliGemma and randomly initialize the final projection layer. To facilitate training, we add low-rank adapters to the language model attention weights, as well as the linear projection layers. Our training dataset is composed of (query, document image) pairs that we sourced from two main streams. On one hand, we repurposed Visual Question Answering datasets and used the original question as our query, and the associated image as the gold label. To increase the coverage and diversity of the training set, we also collected tens of thousands of permissively licensed PDF documents covering a broad range of topics, and synthetically create relevant queries using the powerful Claude Sonnet Vision model. In total, we gather around 100k pairs, and finetune our model with an in-batch contrastive loss, by attempting to maximize the difference between the matching score of the correct (page, query) pair, and the score of the incorrect pairs.
+ColPali results
+On ViDoRe, ColPali outperforms all other evaluated systems, including baselines where a very strong proprietary Vision model (Claude Sonnet) is used to caption all visual elements !
+The difference is particularly stark on the more visually complex benchmark tasks, such as InfographicVQA, ArxivQA, and TabFQuAD representing respectively infographics, figures, and tables. However, text centric documents are also better retrieved by the ColPali model across all evaluated domains and languages, making our approach the overall best performing document-retrieval model on ViDoRe !
+Interpretability
+Beyond speed and performance, another interesting feature of ColPali, is that it enables visualizing which patches of a document stand out w.r.t. a given query. Here the term <hour> matches patches containing words like "hourly" but also the x-axis representing time, showcasing good chart comprehension !
+Conclusion
+This blogpost is already long enough but good news, tons more resources, informations and ablations exist, and will keep on coming !
+📝 The paper: https://arxiv.org/abs/2407.01449
+🗃️ The benchmark: https://huggingface.co/vidore
+👀 The model: https://huggingface.co/vidore/colpali
+💻 The benchmark code: https://github.com/illuin-tech/vidore-benchmark
+💻 The training code: https://github.com/ManuelFay/colpali
+✖️ X of the first authors: @ManuelFaysse, @sibille_hugues, @tonywu_71
+Citation
+@misc{faysse2024colpaliefficientdocumentretrieval,
+title={ColPali: Efficient Document Retrieval with Vision Language Models},
+author={Manuel Faysse and Hugues Sibille and Tony Wu and Bilel Omrani and Gautier Viaud and Céline Hudelot and Pierre Colombo},
+year={2024},
+eprint={2407.01449},
+archivePrefix={arXiv},
+primaryClass={cs.IR},
+url={https://arxiv.org/abs/2407.01449},
+}
+Acknowledgments
+This work primarly stems from an academic-industry partnership between CentraleSupélec and Illuin Technology, with involvement from actors at Equall.ai and ETH Zürich. It benefits from a compute grant from CINES ADASTRA (Grant 2024-AD011015443). Joint work by Manuel Faysse, Hugues Sibille, Tony Wu, Bilel Omrani, Gautier Viaud, Céline Hudelot, Pierre Colombo.
